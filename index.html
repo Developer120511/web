@@ -1,0 +1,823 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>EstudIA — Asistente de estudio con IA</title>
+<meta name="description" content="EstudIA: asistente de estudio con inteligencia artificial, basado en los libros de texto de la Secundaria Básica cubana. Hecho por Daniel A. Tellez.">
+<meta name="theme-color" content="#06080b">
+<meta property="og:title" content="EstudIA — Asistente de estudio con IA">
+<meta property="og:description" content="Pregunta lo que necesites y responde con tus libros de texto, citando la página.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><defs><linearGradient id='g' x1='0' y1='0' x2='1' y2='1'><stop offset='0' stop-color='%23c9a227'/><stop offset='1' stop-color='%2300e5c0'/></linearGradient></defs><rect width='64' height='64' rx='14' fill='%2306080b'/><path d='M20 18h11a5 5 0 015 5v23a4 4 0 00-4-4H20z' fill='url(%23g)'/><path d='M44 18H33a5 5 0 00-5 5v23a4 4 0 014-4h12z' fill='url(%23g)' opacity='.55'/></svg>">
+<style>
+/* ============ BASE ============ */
+:root{
+  --bg:#06080b; --bg-2:#0a0e14; --panel:rgba(15,20,28,.72); --panel-solid:#0f141c;
+  --line:rgba(201,162,39,.14); --line-2:rgba(255,255,255,.07);
+  --gold:#c9a227; --gold-2:#e8c65a; --ai:#00e5c0; --ai-2:#38f2d0; --violet:#7c5cff;
+  --ink:#eef2f6; --muted:#8b98a8; --muted-2:#5f6c7c;
+  --user:rgba(0,229,192,.09);
+  --radius:16px;
+  --shadow:0 1px 2px rgba(0,0,0,.4), 0 18px 50px rgba(0,0,0,.55);
+  --ease:cubic-bezier(.22,1,.36,1);
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{
+  margin:0;background:var(--bg);color:var(--ink);overflow:hidden;
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,Helvetica,Arial,sans-serif;
+  -webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;
+}
+button{font:inherit;cursor:pointer;color:inherit}
+input,select,textarea{font:inherit;color:inherit}
+::selection{background:rgba(0,229,192,.25)}
+
+/* fondo animado */
+.bg-fx{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden}
+.blob{position:absolute;border-radius:50%;filter:blur(90px);opacity:.5;will-change:transform}
+.blob.a{width:48vw;height:48vw;left:-14vw;top:-16vw;background:radial-gradient(circle,rgba(201,162,39,.30),transparent 68%);animation:float1 26s var(--ease) infinite alternate}
+.blob.b{width:44vw;height:44vw;right:-12vw;top:8vh;background:radial-gradient(circle,rgba(0,229,192,.20),transparent 68%);animation:float2 32s var(--ease) infinite alternate}
+.blob.c{width:40vw;height:40vw;left:26vw;bottom:-18vw;background:radial-gradient(circle,rgba(124,92,255,.16),transparent 68%);animation:float3 38s var(--ease) infinite alternate}
+@keyframes float1{to{transform:translate3d(7vw,5vh,0) scale(1.12)}}
+@keyframes float2{to{transform:translate3d(-6vw,8vh,0) scale(1.08)}}
+@keyframes float3{to{transform:translate3d(4vw,-6vh,0) scale(1.15)}}
+.grid-fx{position:absolute;inset:0;opacity:.28;
+  background-image:linear-gradient(rgba(255,255,255,.045) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.045) 1px,transparent 1px);
+  background-size:56px 56px;
+  mask-image:radial-gradient(ellipse 90% 70% at 50% 0%,#000 35%,transparent 78%);
+  -webkit-mask-image:radial-gradient(ellipse 90% 70% at 50% 0%,#000 35%,transparent 78%);
+}
+.scan{position:absolute;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(0,229,192,.55),transparent);animation:scan 9s linear infinite;opacity:.5}
+@keyframes scan{0%{top:-2%}100%{top:102%}}
+
+/* ============ AUTH ============ */
+#auth{position:relative;z-index:1;height:100dvh;overflow-y:auto;display:grid;place-items:center;padding:28px 18px}
+.auth-wrap{width:100%;max-width:920px;display:grid;grid-template-columns:1.05fr .95fr;gap:34px;align-items:center}
+.brand-lg{display:flex;align-items:center;gap:14px;margin-bottom:22px}
+.mark{width:52px;height:52px;border-radius:15px;display:grid;place-items:center;position:relative;
+  background:linear-gradient(145deg,#12181f,#080b10);border:1px solid rgba(201,162,39,.35);
+  box-shadow:0 0 0 1px rgba(0,229,192,.08) inset,0 10px 30px rgba(0,0,0,.6)}
+.mark::after{content:"";position:absolute;inset:-1px;border-radius:15px;padding:1px;
+  background:linear-gradient(135deg,rgba(201,162,39,.85),rgba(0,229,192,.6),transparent 70%);
+  -webkit-mask:linear-gradient(#000,#000) content-box,linear-gradient(#000,#000);
+  -webkit-mask-composite:xor;mask-composite:exclude;opacity:.9}
+.mark svg{width:28px;height:28px}
+h1.brand-name{margin:0;font-size:34px;letter-spacing:-1.2px;font-weight:800;line-height:1}
+.grad{background:linear-gradient(100deg,var(--gold-2),var(--ai) 55%,var(--violet));-webkit-background-clip:text;background-clip:text;color:transparent}
+.tagline{color:var(--muted);font-size:15.5px;line-height:1.65;margin:14px 0 26px;max-width:430px}
+.stats{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:26px}
+.stat{background:rgba(255,255,255,.03);border:1px solid var(--line-2);border-radius:12px;padding:11px 15px;min-width:104px;
+  backdrop-filter:blur(8px);animation:rise .7s var(--ease) both}
+.stat b{display:block;font-size:20px;letter-spacing:-.6px;color:var(--gold-2)}
+.stat span{font-size:11.5px;color:var(--muted);letter-spacing:.2px}
+@keyframes rise{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+.credits{display:flex;align-items:center;gap:12px;flex-wrap:wrap;font-size:12.5px;color:var(--muted)}
+.credit-name{color:#dfe6ee;font-weight:600}
+.wa{display:inline-flex;align-items:center;gap:7px;text-decoration:none;color:#062b23;font-weight:700;
+  background:linear-gradient(135deg,#25d366,#1faa52);padding:8px 14px;border-radius:99px;font-size:12.5px;
+  box-shadow:0 8px 22px rgba(37,211,102,.28);transition:transform .25s var(--ease),box-shadow .25s}
+.wa:hover{transform:translateY(-2px);box-shadow:0 12px 28px rgba(37,211,102,.4)}
+.wa svg{width:15px;height:15px}
+
+.card{position:relative;background:var(--panel);border:1px solid var(--line-2);border-radius:22px;
+  padding:28px;backdrop-filter:blur(22px) saturate(140%);-webkit-backdrop-filter:blur(22px) saturate(140%);
+  box-shadow:var(--shadow);animation:rise .8s var(--ease) both;overflow:hidden}
+.card::before{content:"";position:absolute;inset:0;border-radius:22px;padding:1px;pointer-events:none;
+  background:linear-gradient(150deg,rgba(201,162,39,.5),transparent 40%,rgba(0,229,192,.35));
+  -webkit-mask:linear-gradient(#000,#000) content-box,linear-gradient(#000,#000);
+  -webkit-mask-composite:xor;mask-composite:exclude}
+.card h2{margin:0 0 4px;font-size:19px;letter-spacing:-.4px}
+.card p.sub{color:var(--muted);font-size:13px;margin:0 0 8px}
+.tabs{display:flex;gap:5px;background:rgba(255,255,255,.04);padding:4px;border-radius:12px;margin:16px 0 4px;border:1px solid var(--line-2)}
+.tabs button{flex:1;border:0;background:transparent;padding:9px;border-radius:9px;font-size:13.5px;color:var(--muted);font-weight:650;
+  transition:.28s var(--ease)}
+.tabs button.on{background:linear-gradient(135deg,rgba(201,162,39,.16),rgba(0,229,192,.12));color:var(--ink);
+  box-shadow:0 4px 16px rgba(0,0,0,.3)}
+label{display:block;font-size:12px;font-weight:650;margin:15px 0 7px;color:#b9c4d1;letter-spacing:.15px}
+.inp{width:100%;padding:12px 14px;border:1px solid var(--line-2);border-radius:12px;background:rgba(255,255,255,.04);
+  outline:none;font-size:15px;transition:.25s var(--ease);color:var(--ink)}
+.inp::placeholder{color:var(--muted-2)}
+.inp:focus{border-color:rgba(0,229,192,.55);background:rgba(0,229,192,.05);
+  box-shadow:0 0 0 4px rgba(0,229,192,.1),0 0 24px rgba(0,229,192,.08)}
+.btn{width:100%;padding:13px;border:0;border-radius:12px;font-weight:750;font-size:15px;margin-top:20px;
+  background:linear-gradient(135deg,var(--gold),#b28d15);color:#0a0a0a;position:relative;overflow:hidden;
+  transition:transform .2s var(--ease),box-shadow .25s;box-shadow:0 10px 30px rgba(201,162,39,.25)}
+.btn:hover{transform:translateY(-1.5px);box-shadow:0 14px 36px rgba(201,162,39,.38)}
+.btn:active{transform:translateY(0)}
+.btn::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(255,255,255,.42),transparent);
+  transform:translateX(-100%);animation:shimmer 3.4s infinite}
+@keyframes shimmer{0%,55%{transform:translateX(-100%)}85%,100%{transform:translateX(100%)}}
+.btn:disabled{opacity:.6;cursor:not-allowed;animation:none}
+.btn:disabled::after{display:none}
+.msg{margin-top:14px;font-size:13px;padding:11px 13px;border-radius:11px;display:none;line-height:1.5}
+.msg.err{display:block;background:rgba(255,71,71,.1);color:#ff8b8b;border:1px solid rgba(255,71,71,.3);animation:shake .4s}
+.msg.ok{display:block;background:rgba(37,211,102,.1);color:#6ff0a5;border:1px solid rgba(37,211,102,.28)}
+@keyframes shake{25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
+.foot{text-align:center;font-size:11.5px;color:var(--muted-2);margin-top:16px;line-height:1.7}
+.foot a{color:var(--muted)}
+
+/* ============ APP ============ */
+#app{display:none;position:relative;z-index:1;height:100dvh;grid-template-columns:288px 1fr}
+#app.on{display:grid;animation:fadeIn .5s var(--ease)}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+
+aside{display:flex;flex-direction:column;min-height:0;border-right:1px solid var(--line-2);
+  background:linear-gradient(180deg,rgba(12,16,22,.92),rgba(6,8,11,.96));backdrop-filter:blur(20px)}
+.side-top{padding:16px 14px 12px;border-bottom:1px solid var(--line-2)}
+.brand{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+.brand .mark{width:34px;height:34px;border-radius:11px}
+.brand .mark svg{width:19px;height:19px}
+.brand b{font-size:15.5px;letter-spacing:-.3px}
+.brand small{display:block;font-size:9.5px;color:var(--muted-2);letter-spacing:1.4px;text-transform:uppercase}
+.newchat{width:100%;padding:11px;border-radius:12px;border:1px solid rgba(0,229,192,.3);
+  background:linear-gradient(135deg,rgba(0,229,192,.14),rgba(0,229,192,.05));font-weight:700;font-size:13.5px;
+  display:flex;align-items:center;gap:8px;justify-content:center;transition:.28s var(--ease)}
+.newchat:hover{background:linear-gradient(135deg,rgba(0,229,192,.24),rgba(0,229,192,.1));
+  border-color:rgba(0,229,192,.6);box-shadow:0 0 26px rgba(0,229,192,.22);transform:translateY(-1px)}
+.convs{flex:1;overflow-y:auto;padding:10px 8px;scrollbar-width:thin}
+.convs::-webkit-scrollbar{width:6px}
+.convs::-webkit-scrollbar-thumb{background:rgba(255,255,255,.1);border-radius:9px}
+.conv{display:flex;align-items:center;gap:8px;padding:10px 11px;border-radius:11px;font-size:13px;color:#a7b4c2;
+  cursor:pointer;margin-bottom:3px;transition:.22s var(--ease);animation:slideIn .4s var(--ease) both;border:1px solid transparent}
+@keyframes slideIn{from{opacity:0;transform:translateX(-8px)}to{opacity:1;transform:none}}
+.conv:hover{background:rgba(255,255,255,.05);color:var(--ink)}
+.conv.on{background:linear-gradient(135deg,rgba(201,162,39,.14),rgba(0,229,192,.09));
+  border-color:rgba(201,162,39,.25);color:#fff;font-weight:600}
+.conv span{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.conv .del{opacity:0;border:0;background:none;color:var(--muted-2);padding:2px 5px;border-radius:6px;font-size:13px;transition:.2s}
+.conv:hover .del{opacity:1}
+.conv .del:hover{color:#ff7b7b;background:rgba(255,71,71,.12)}
+.side-bot{padding:13px;border-top:1px solid var(--line-2);font-size:12px}
+.user{display:flex;align-items:center;gap:9px;margin-bottom:11px}
+.avatar{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,var(--gold),var(--ai));color:#08110f;
+  display:grid;place-items:center;font-weight:800;font-size:13px;flex:0 0 32px}
+.user div{flex:1;overflow:hidden}
+.user b{font-size:12.5px}
+.user small{display:block;color:var(--muted-2);font-size:10.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.logout{border:0;background:none;color:var(--muted-2);font-size:11px;text-decoration:none;transition:.2s}
+.logout:hover{color:#ff8b8b}
+.quotarow{display:flex;justify-content:space-between;color:var(--muted-2);font-size:11px;margin-bottom:5px}
+.quota{height:5px;background:rgba(255,255,255,.07);border-radius:99px;overflow:hidden}
+.quota i{display:block;height:100%;width:0;border-radius:99px;transition:width .6s var(--ease),background .4s;
+  background:linear-gradient(90deg,var(--ai),var(--gold))}
+.side-credit{margin-top:11px;padding-top:10px;border-top:1px solid var(--line-2);font-size:10.5px;color:var(--muted-2);
+  display:flex;align-items:center;justify-content:space-between;gap:6px}
+.side-credit a{color:#25d366;text-decoration:none;font-weight:600}
+.side-credit a:hover{text-decoration:underline}
+
+main{display:flex;flex-direction:column;min-width:0;min-height:0;position:relative}
+.top{display:flex;gap:8px;align-items:center;padding:12px 16px;border-bottom:1px solid var(--line-2);
+  background:rgba(6,8,11,.7);backdrop-filter:blur(16px);flex-wrap:wrap;z-index:5}
+.sel{border:1px solid var(--line-2);border-radius:10px;padding:8px 11px;background:rgba(255,255,255,.04);
+  font-size:12.5px;font-weight:600;max-width:185px;color:#cfd8e3;transition:.25s var(--ease);appearance:none;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='%238b98a8' stroke-width='3'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right 10px center;padding-right:28px}
+.sel:hover{border-color:rgba(201,162,39,.4)}
+.sel:focus{outline:none;border-color:rgba(0,229,192,.6);box-shadow:0 0 0 3px rgba(0,229,192,.1)}
+.menu-btn{display:none;border:1px solid var(--line-2);background:rgba(255,255,255,.04);border-radius:10px;padding:8px 11px}
+
+.chat{flex:1;overflow-y:auto;padding:26px 16px 8px;scroll-behavior:smooth;scrollbar-width:thin}
+.chat::-webkit-scrollbar{width:8px}
+.chat::-webkit-scrollbar-thumb{background:rgba(255,255,255,.09);border-radius:9px}
+.wrap{max-width:780px;margin:0 auto}
+.turn{margin-bottom:24px;display:flex;gap:13px;animation:turnIn .5s var(--ease) both}
+@keyframes turnIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+.turn .who{width:32px;height:32px;border-radius:10px;flex:0 0 32px;display:grid;place-items:center;font-size:13px;font-weight:800}
+.turn.bot .who{background:linear-gradient(135deg,var(--gold),var(--ai));color:#08110f;box-shadow:0 6px 20px rgba(0,229,192,.22)}
+.turn.me .who{background:rgba(255,255,255,.07);color:var(--ai);border:1px solid var(--line-2)}
+.bubble{flex:1;min-width:0;font-size:15.2px;line-height:1.7;overflow-wrap:break-word;color:#e3eaf2}
+.turn.me .bubble{background:var(--user);border:1px solid rgba(0,229,192,.16);padding:12px 15px;border-radius:14px}
+.bubble p{margin:0 0 11px}
+.bubble p:last-child{margin-bottom:0}
+.bubble ul,.bubble ol{margin:0 0 11px;padding-left:21px}
+.bubble li{margin:4px 0}
+.bubble li::marker{color:var(--ai)}
+.bubble strong{font-weight:750;color:#fff}
+.bubble em{color:var(--gold-2)}
+.bubble code{background:rgba(0,229,192,.1);color:var(--ai-2);padding:2px 6px;border-radius:6px;font-size:.9em}
+.bubble h3{font-size:15.5px;margin:14px 0 7px;color:#fff;letter-spacing:-.2px}
+.sources{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}
+.src{font-size:11px;background:rgba(201,162,39,.1);color:var(--gold-2);border:1px solid rgba(201,162,39,.28);
+  padding:4px 10px;border-radius:99px;font-weight:650;transition:.25s var(--ease);animation:rise .4s var(--ease) both}
+.src:hover{background:rgba(201,162,39,.2);transform:translateY(-1px)}
+.dots{display:inline-flex;gap:4px;vertical-align:middle}
+.dots i{width:6px;height:6px;border-radius:50%;background:var(--ai);animation:bounce 1.3s infinite}
+.dots i:nth-child(2){animation-delay:.15s}.dots i:nth-child(3){animation-delay:.3s}
+@keyframes bounce{0%,60%,100%{transform:translateY(0);opacity:.4}30%{transform:translateY(-5px);opacity:1}}
+.cursor{display:inline-block;width:7px;height:16px;background:var(--ai);border-radius:2px;vertical-align:-3px;
+  margin-left:2px;animation:blink 1s steps(2) infinite}
+@keyframes blink{50%{opacity:0}}
+
+.empty{max-width:640px;margin:7vh auto;text-align:center;animation:rise .8s var(--ease) both}
+.empty h2{font-size:27px;margin:0 0 10px;letter-spacing:-1px;font-weight:800}
+.empty p{color:var(--muted);font-size:14.5px;line-height:1.7;margin:0 auto;max-width:460px}
+.chips{display:flex;flex-wrap:wrap;gap:9px;justify-content:center;margin-top:26px}
+.chip{background:rgba(255,255,255,.035);border:1px solid var(--line-2);border-radius:99px;padding:9px 15px;
+  font-size:12.5px;color:#b9c4d1;transition:.28s var(--ease)}
+.chip:hover{border-color:rgba(0,229,192,.45);color:var(--ai);background:rgba(0,229,192,.07);transform:translateY(-2px);
+  box-shadow:0 8px 22px rgba(0,229,192,.12)}
+
+.composer{padding:10px 16px 18px;background:linear-gradient(to top,rgba(6,8,11,.96) 45%,transparent)}
+.composer .wrap{display:flex;gap:10px;align-items:flex-end;background:rgba(15,20,28,.85);
+  border:1px solid var(--line-2);border-radius:18px;padding:8px 8px 8px 16px;transition:.3s var(--ease);
+  backdrop-filter:blur(14px)}
+.composer .wrap:focus-within{border-color:rgba(0,229,192,.45);box-shadow:0 0 0 4px rgba(0,229,192,.08),0 14px 40px rgba(0,0,0,.5)}
+#q{flex:1;border:0;outline:none;resize:none;max-height:170px;padding:10px 0;font-size:15.2px;background:transparent;
+  line-height:1.55;color:var(--ink)}
+#q::placeholder{color:var(--muted-2)}
+#send{border:0;border-radius:12px;background:linear-gradient(135deg,var(--ai),#00b89c);color:#04211c;width:40px;height:40px;
+  display:grid;place-items:center;flex:0 0 40px;transition:.25s var(--ease);position:relative}
+#send:hover{transform:translateY(-1px) scale(1.04);box-shadow:0 10px 26px rgba(0,229,192,.35)}
+#send:disabled{opacity:.4;cursor:not-allowed;transform:none;box-shadow:none}
+#send.pulse::before{content:"";position:absolute;inset:-4px;border-radius:15px;border:1px solid rgba(0,229,192,.5);
+  animation:ping 1.6s var(--ease) infinite}
+@keyframes ping{0%{transform:scale(.9);opacity:.9}100%{transform:scale(1.35);opacity:0}}
+.hint{text-align:center;font-size:10.5px;color:var(--muted-2);margin-top:8px;letter-spacing:.15px}
+.hint b{color:var(--gold-2);font-weight:650}
+
+/* modal + toast */
+.modal{position:fixed;inset:0;background:rgba(3,5,8,.78);backdrop-filter:blur(8px);display:none;place-items:center;
+  padding:20px;z-index:60;animation:fadeIn .3s}
+.modal.on{display:grid}
+.modal .card{max-width:480px;animation:pop .45s var(--ease) both}
+@keyframes pop{from{opacity:0;transform:scale(.94) translateY(10px)}to{opacity:1;transform:none}}
+.code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;background:rgba(0,229,192,.07);border:1px dashed rgba(0,229,192,.35);
+  padding:16px;border-radius:12px;text-align:center;font-size:19px;letter-spacing:2px;font-weight:800;margin:16px 0;
+  color:var(--ai-2);word-break:break-all}
+.toast{position:fixed;bottom:24px;left:50%;transform:translate(-50%,90px);background:rgba(15,20,28,.96);
+  border:1px solid var(--line-2);color:var(--ink);padding:12px 20px;border-radius:99px;font-size:13px;z-index:80;
+  box-shadow:var(--shadow);transition:transform .45s var(--ease),opacity .3s;opacity:0;backdrop-filter:blur(14px)}
+.toast.on{transform:translate(-50%,0);opacity:1}
+.wa-fab{position:fixed;right:18px;bottom:18px;z-index:55;width:52px;height:52px;border-radius:50%;
+  background:linear-gradient(135deg,#25d366,#1a9e4b);display:grid;place-items:center;text-decoration:none;
+  box-shadow:0 12px 30px rgba(37,211,102,.35);transition:transform .25s var(--ease)}
+.wa-fab:hover{transform:scale(1.09) rotate(-4deg)}
+.wa-fab::after{content:"";position:absolute;inset:0;border-radius:50%;border:2px solid rgba(37,211,102,.5);animation:ping 2.2s infinite}
+.wa-fab svg{width:26px;height:26px;fill:#fff}
+
+@media (max-width:900px){
+  .auth-wrap{grid-template-columns:1fr;gap:22px;max-width:440px}
+  .hero-side{text-align:center}
+  .tagline{margin-left:auto;margin-right:auto}
+  .brand-lg,.stats,.credits{justify-content:center}
+  .brand-lg{flex-direction:column;gap:10px}
+  h1.brand-name{font-size:29px}
+  .stats{display:none}
+}
+@media (max-width:820px){
+  #app{grid-template-columns:1fr}
+  aside{position:fixed;inset:0 auto 0 0;width:280px;z-index:45;transform:translateX(-102%);transition:transform .32s var(--ease)}
+  aside.on{transform:none;box-shadow:30px 0 60px rgba(0,0,0,.6)}
+  .menu-btn{display:block}
+  .sel{max-width:128px;font-size:11.5px;padding-right:24px}
+  .chat{padding:18px 12px 4px}
+  .empty h2{font-size:22px}
+  .wa-fab{width:46px;height:46px}
+}
+@media (prefers-reduced-motion:reduce){
+  *{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}
+}
+</style>
+</head>
+<body>
+
+<div class="bg-fx">
+  <div class="blob a"></div><div class="blob b"></div><div class="blob c"></div>
+  <div class="grid-fx"></div><div class="scan"></div>
+</div>
+
+<!-- ================= LOGIN ================= -->
+<div id="auth">
+  <div class="auth-wrap">
+    <div class="hero-side">
+      <div class="brand-lg">
+        <div class="mark">
+          <svg viewBox="0 0 64 64" fill="none">
+            <defs><linearGradient id="lg" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0" stop-color="#e8c65a"/><stop offset="1" stop-color="#00e5c0"/>
+            </linearGradient></defs>
+            <path d="M18 17h12a5 5 0 015 5v25a4 4 0 00-4-4H18z" fill="url(#lg)"/>
+            <path d="M46 17H34a5 5 0 00-5 5v25a4 4 0 014-4h13z" fill="url(#lg)" opacity=".5"/>
+            <circle cx="32" cy="10" r="2.6" fill="#00e5c0"/><circle cx="48" cy="24" r="2" fill="#e8c65a" opacity=".8"/>
+          </svg>
+        </div>
+        <div>
+          <h1 class="brand-name"><span class="grad">EstudIA</span></h1>
+          <small style="color:var(--muted-2);font-size:10px;letter-spacing:2.4px;text-transform:uppercase">Inteligencia artificial · Cuba</small>
+        </div>
+      </div>
+      <p class="tagline">Tu tutor personal, entrenado con los <b style="color:#dfe6ee">35 libros de texto</b> de la Secundaria Básica cubana. Pregunta lo que quieras y responde con lo que dicen tus libros, citando la página exacta.</p>
+      <div class="stats">
+        <div class="stat" style="animation-delay:.1s"><b data-count="35">0</b><span>Libros</span></div>
+        <div class="stat" style="animation-delay:.2s"><b data-count="21238">0</b><span>Fragmentos</span></div>
+        <div class="stat" style="animation-delay:.3s"><b data-count="2.27" data-dec="1" data-suffix="M">0</b><span>Palabras</span></div>
+      </div>
+      <div class="credits">
+        <span>Hecho por <span class="credit-name">Daniel A. Tellez</span></span>
+        <a class="wa" href="https://wa.me/5355857689" target="_blank" rel="noopener">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M17.5 14.4c-.3-.2-1.7-.9-2-1-.3-.1-.5-.2-.7.1-.2.3-.7 1-.9 1.2-.2.2-.3.2-.6.1-1.5-.8-2.6-1.9-3.3-3.3-.1-.3 0-.4.1-.5.2-.2.5-.6.6-.8.1-.2.1-.4 0-.5-.1-.2-.7-1.6-.9-2.1-.2-.5-.5-.4-.7-.4h-.6c-.2 0-.5.1-.8.4-.3.3-1 1-1 2.4s1 2.8 1.2 3c.1.2 1.9 3 4.7 4.1 1.9.8 2.6.8 3.5.7.6-.1 1.7-.7 1.9-1.4.2-.7.2-1.2.2-1.4 0-.1-.2-.2-.4-.3z"/><path d="M12 2a10 10 0 00-8.6 15L2 22l5.2-1.4A10 10 0 1012 2zm0 18a8 8 0 01-4.1-1.1l-.3-.2-3 .8.8-2.9-.2-.3A8 8 0 1112 20z"/></svg>
+          WhatsApp
+        </a>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2 id="cardTitle">Bienvenido de vuelta</h2>
+      <p class="sub" id="cardSub">Entra para continuar estudiando.</p>
+      <div class="tabs">
+        <button id="tabLogin" class="on">Entrar</button>
+        <button id="tabReg">Crear cuenta</button>
+      </div>
+      <div id="fName" style="display:none">
+        <label for="name">Nombre</label>
+        <input id="name" class="inp" type="text" placeholder="Tu nombre completo" autocomplete="name">
+      </div>
+      <label for="email">Correo</label>
+      <input id="email" class="inp" type="email" placeholder="tucorreo@ejemplo.com" autocomplete="username" spellcheck="false">
+      <label for="pass">Contraseña</label>
+      <input id="pass" class="inp" type="password" placeholder="Mínimo 8 caracteres" autocomplete="current-password">
+      <button id="go" class="btn">Entrar</button>
+      <div id="formMsg" class="msg"></div>
+      <div class="foot">Tus datos viajan cifrados y la contraseña nunca sale de tu navegador.<br>¿Problemas? <a href="https://wa.me/5355857689" target="_blank" rel="noopener">Escríbeme por WhatsApp</a></div>
+    </div>
+  </div>
+</div>
+
+<!-- ================= APP ================= -->
+<div id="app">
+  <aside id="side">
+    <div class="side-top">
+      <div class="brand">
+        <div class="mark">
+          <svg viewBox="0 0 64 64" fill="none">
+            <path d="M18 17h12a5 5 0 015 5v25a4 4 0 00-4-4H18z" fill="url(#lg)"/>
+            <path d="M46 17H34a5 5 0 00-5 5v25a4 4 0 014-4h13z" fill="url(#lg)" opacity=".5"/>
+          </svg>
+        </div>
+        <div><b>EstudIA</b><small>Secundaria Básica</small></div>
+      </div>
+      <button class="newchat" id="newChat">＋ Nueva conversación</button>
+    </div>
+    <div class="convs" id="convs"></div>
+    <div class="side-bot">
+      <div class="user">
+        <div class="avatar" id="avatar">?</div>
+        <div><b id="uName">—</b><small id="uMail">—</small></div>
+        <button class="logout" id="logout">Salir</button>
+      </div>
+      <div class="quotarow"><span>Preguntas hoy</span><span id="quotaTxt">—</span></div>
+      <div class="quota"><i id="quotaBar"></i></div>
+      <div class="side-credit">
+        <span>Por Daniel A. Tellez</span>
+        <a href="https://wa.me/5355857689" target="_blank" rel="noopener">WhatsApp</a>
+      </div>
+    </div>
+  </aside>
+
+  <main>
+    <div class="top">
+      <button class="menu-btn" id="menuBtn">☰</button>
+      <select class="sel" id="grade" title="Grado">
+        <option value="todos">Todos los grados</option>
+        <option value="7mo">7mo grado</option>
+        <option value="8vo">8vo grado</option>
+        <option value="9no">9no grado</option>
+      </select>
+      <select class="sel" id="subject" title="Materia"></select>
+      <select class="sel" id="mode" title="Modo de respuesta">
+        <option value="rapido">⚡ Rápido</option>
+        <option value="equilibrado" selected>⚖️ Equilibrado</option>
+        <option value="preciso">🎯 Preciso</option>
+      </select>
+    </div>
+
+    <div class="chat" id="chat"><div class="wrap" id="stream"></div></div>
+
+    <div class="composer">
+      <div class="wrap">
+        <textarea id="q" rows="1" placeholder="Escribe tu pregunta…"></textarea>
+        <button id="send" aria-label="Enviar">
+          <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
+        </button>
+      </div>
+      <div class="hint">EstudIA responde con el contenido de tus libros · Verifica siempre las citas · <b>Hecho por Daniel A. Tellez</b></div>
+    </div>
+  </main>
+</div>
+
+<a class="wa-fab" href="https://wa.me/5355857689" target="_blank" rel="noopener" title="Escríbeme por WhatsApp" aria-label="WhatsApp">
+  <svg viewBox="0 0 24 24"><path d="M17.5 14.4c-.3-.2-1.7-.9-2-1-.3-.1-.5-.2-.7.1-.2.3-.7 1-.9 1.2-.2.2-.3.2-.6.1-1.5-.8-2.6-1.9-3.3-3.3-.1-.3 0-.4.1-.5.2-.2.5-.6.6-.8.1-.2.1-.4 0-.5-.1-.2-.7-1.6-.9-2.1-.2-.5-.5-.4-.7-.4h-.6c-.2 0-.5.1-.8.4-.3.3-1 1-1 2.4s1 2.8 1.2 3c.1.2 1.9 3 4.7 4.1 1.9.8 2.6.8 3.5.7.6-.1 1.7-.7 1.9-1.4.2-.7.2-1.2.2-1.4 0-.1-.2-.2-.4-.3z"/><path d="M12 2a10 10 0 00-8.6 15L2 22l5.2-1.4A10 10 0 1012 2zm0 18a8 8 0 01-4.1-1.1l-.3-.2-3 .8.8-2.9-.2-.3A8 8 0 1112 20z"/></svg>
+</a>
+
+<!-- modal recuperacion -->
+<div class="modal" id="modal">
+  <div class="card">
+    <h2>Guarda tu código</h2>
+    <p class="sub">Si olvidas tu contraseña, este código es la única forma de recuperar tu cuenta. No se volverá a mostrar.</p>
+    <div class="code" id="recCode">—</div>
+    <button class="btn" id="recOk">Ya lo guardé</button>
+  </div>
+</div>
+
+<!-- modal problema de conexión -->
+<div class="modal" id="netModal">
+  <div class="card">
+    <h2>No pude conectar con el servidor</h2>
+    <p class="sub">La página cargó, pero tu red no deja llegar a la API de EstudIA. Esto suele pasar cuando el proveedor de internet bloquea dominios <code>workers.dev</code>.</p>
+    <div id="netDetail" class="msg err" style="display:block;margin-top:12px"></div>
+    <button class="btn" id="netRetry">Reintentar</button>
+    <div class="foot" style="margin-top:14px">Si sigue fallando, <a href="https://wa.me/5355857689" target="_blank" rel="noopener">escríbeme por WhatsApp</a> y lo resolvemos.</div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ================= CONFIG ================= */
+const API_DEFAULT = 'https://estudia-api.estudia-cuba.workers.dev';
+const API = (localStorage.getItem('estudia_api') || API_DEFAULT).replace(/\/+$/, '');
+const $ = id => document.getElementById(id);
+let TOKEN = localStorage.getItem('estudia_token') || '';
+let CONV = null, BUSY = false, AUTHMODE = 'login';
+
+/* ================= UTIL ================= */
+const enc = new TextEncoder();
+const hex = b => [...new Uint8Array(b)].map(x => x.toString(16).padStart(2, '0')).join('');
+
+async function derive(password, salt) {
+  const key = await crypto.subtle.importKey('raw', enc.encode(password), 'PBKDF2', false, ['deriveBits']);
+  const bits = await crypto.subtle.deriveBits(
+    { name: 'PBKDF2', salt: enc.encode(salt), iterations: 200000, hash: 'SHA-256' }, key, 256);
+  return hex(bits);
+}
+const saltOf = email => 'estudia.cu:' + email.trim().toLowerCase();
+
+function toast(msg, ms = 2600) {
+  const t = $('toast'); t.textContent = msg; t.classList.add('on');
+  clearTimeout(t._t); t._t = setTimeout(() => t.classList.remove('on'), ms);
+}
+
+function countUp() {
+  document.querySelectorAll('[data-count]').forEach(el => {
+    const target = parseFloat(el.dataset.count), dec = parseInt(el.dataset.dec || '0'), suf = el.dataset.suffix || '';
+    const t0 = performance.now(), dur = 1400;
+    const step = now => {
+      const p = Math.min(1, (now - t0) / dur), e = 1 - Math.pow(1 - p, 3);
+      const v = target * e;
+      el.textContent = (dec ? v.toFixed(dec) : Math.round(v).toLocaleString('es-ES')) + suf;
+      if (p < 1) requestAnimationFrame(step);
+    };
+    requestAnimationFrame(step);
+  });
+}
+
+/* ================= API ================= */
+async function api(path, opts = {}) {
+  let r;
+  try {
+    r = await fetch(API + path, {
+      ...opts,
+      headers: { 'Content-Type': 'application/json', ...(TOKEN ? { Authorization: 'Bearer ' + TOKEN } : {}), ...(opts.headers || {}) }
+    });
+  } catch (e) {
+    const err = new Error('NET');
+    err.net = true; err.detail = e.message;
+    throw err;
+  }
+  const txt = await r.text();
+  let j; try { j = JSON.parse(txt); } catch { j = { error: txt }; }
+  if (!r.ok) throw new Error(j.error || ('Error ' + r.status));
+  return j;
+}
+
+/* ================= AUTH ================= */
+function setTab(m) {
+  AUTHMODE = m;
+  $('tabLogin').classList.toggle('on', m === 'login');
+  $('tabReg').classList.toggle('on', m === 'register');
+  $('fName').style.display = m === 'register' ? 'block' : 'none';
+  $('go').textContent = m === 'register' ? 'Crear cuenta' : 'Entrar';
+  $('cardTitle').textContent = m === 'register' ? 'Crea tu cuenta' : 'Bienvenido de vuelta';
+  $('cardSub').textContent = m === 'register' ? 'Es gratis y toma 20 segundos.' : 'Entra para continuar estudiando.';
+  $('pass').autocomplete = m === 'register' ? 'new-password' : 'current-password';
+  showMsg('');
+}
+$('tabLogin').onclick = () => setTab('login');
+$('tabReg').onclick = () => setTab('register');
+
+function showMsg(t, ok) {
+  const el = $('formMsg');
+  el.className = 'msg' + (t ? (ok ? ' ok' : ' err') : '');
+  el.textContent = t || '';
+}
+
+function randCode() {
+  const abc = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  const a = new Uint8Array(16); crypto.getRandomValues(a);
+  return [...a].map(x => abc[x % abc.length]).join('').replace(/(.{4})(?=.)/g, '$1-');
+}
+
+$('go').onclick = async () => {
+  const email = $('email').value.trim();
+  const pass = $('pass').value;
+  if (!email || !pass) return showMsg('Escribe tu correo y tu contraseña.');
+  if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return showMsg('Ese correo no parece válido.');
+  if (AUTHMODE === 'register' && pass.length < 8) return showMsg('La contraseña necesita al menos 8 caracteres.');
+
+  $('go').disabled = true;
+  showMsg('Procesando…', true);
+  try {
+    const verifier = await derive(pass, saltOf(email));
+    if (AUTHMODE === 'login') {
+      const r = await api('/api/login', { method: 'POST', body: JSON.stringify({ email, verifier }) });
+      enterApp(r.token, r.user);
+      toast('Bienvenido de nuevo, ' + (r.user.name || 'estudiante'));
+    } else {
+      const recovery = randCode();
+      const r = await api('/api/register', {
+        method: 'POST',
+        body: JSON.stringify({
+          email, name: $('name').value.trim() || 'Estudiante',
+          salt: saltOf(email), verifier, recovery: recovery.toLowerCase()
+        })
+      });
+      $('recCode').textContent = recovery;
+      $('modal').classList.add('on');
+      enterApp(r.token, r.user);
+    }
+  } catch (e) {
+    if (e.net) { showMsg(''); showNetError(e.detail); }
+    else if (/ya está registrado/i.test(e.message)) showMsg('Ese correo ya tiene cuenta. Prueba a entrar.');
+    else if (/incorrectos/i.test(e.message)) showMsg('Correo o contraseña incorrectos.');
+    else showMsg(e.message);
+  } finally { $('go').disabled = false; }
+};
+
+function showNetError(detail) {
+  $('netDetail').textContent = 'Detalle técnico: ' + (detail || 'sin respuesta') + ' · API: ' + API;
+  $('netModal').classList.add('on');
+  showMsg('No se pudo conectar. Revisa tu internet.');
+}
+$('netRetry').onclick = async () => {
+  $('netModal').classList.remove('on');
+  try {
+    const r = await fetch(API + '/api/health');
+    if (r.ok) { toast('Conexión restablecida'); showMsg('Conexión restablecida. Pulsa de nuevo.', true); }
+    else showNetError('HTTP ' + r.status);
+  } catch (e) { showNetError(e.message); }
+};
+$('recOk').onclick = () => { $('modal').classList.remove('on'); toast('Código guardado. No lo pierdas.'); };
+
+function enterApp(token, user) {
+  TOKEN = token;
+  localStorage.setItem('estudia_token', token);
+  $('uName').textContent = user.name || 'Estudiante';
+  $('uMail').textContent = user.email;
+  $('avatar').textContent = (user.name || user.email || '?').trim().charAt(0).toUpperCase();
+  $('auth').style.display = 'none';
+  $('app').classList.add('on');
+  boot();
+}
+
+$('logout').onclick = () => {
+  localStorage.removeItem('estudia_token'); TOKEN = ''; CONV = null; location.reload();
+};
+
+/* ================= BOOT ================= */
+async function boot() { await loadCatalog(); await refreshMe(); await loadConvs(); renderEmpty(); }
+
+async function refreshMe() {
+  try {
+    const r = await api('/api/me');
+    $('quotaTxt').textContent = r.usage.used + ' / ' + r.usage.limit;
+    const pct = (r.usage.used / r.usage.limit) * 100;
+    $('quotaBar').style.width = Math.min(100, pct) + '%';
+    $('quotaBar').style.background = pct > 80 ? 'linear-gradient(90deg,#ff7043,#ff4747)' : 'linear-gradient(90deg,var(--ai),var(--gold))';
+  } catch (e) {
+    if (e.net) showNetError(e.detail);
+  }
+}
+
+async function loadCatalog() {
+  try {
+    const r = await api('/api/catalog');
+    $('subject').innerHTML = '<option value="todas">Todas las materias</option>' +
+      r.subjects.map(s => `<option value="${s}">${s}</option>`).join('');
+  } catch (e) { /* silencioso */ }
+}
+
+async function loadConvs() {
+  try {
+    const r = await api('/api/conversations');
+    const box = $('convs'); box.innerHTML = '';
+    r.conversations.forEach((c, i) => {
+      const d = document.createElement('div');
+      d.className = 'conv' + (CONV === c.id ? ' on' : '');
+      d.style.animationDelay = (i * 25) + 'ms';
+      d.innerHTML = `<span>${escapeHtml(c.title || 'Sin título')}</span><button class="del" title="Borrar">✕</button>`;
+      d.onclick = e => { if (!e.target.classList.contains('del')) openConv(c.id); };
+      d.querySelector('.del').onclick = async e => {
+        e.stopPropagation();
+        if (!confirm('¿Borrar esta conversación?')) return;
+        await api('/api/conversations/' + c.id, { method: 'DELETE' });
+        if (CONV === c.id) { CONV = null; renderEmpty(); }
+        loadConvs(); toast('Conversación borrada');
+      };
+      box.appendChild(d);
+    });
+  } catch (e) { /* silencioso */ }
+}
+
+$('newChat').onclick = () => {
+  CONV = null;
+  document.querySelectorAll('.conv').forEach(x => x.classList.remove('on'));
+  renderEmpty();
+  if (innerWidth <= 820) $('side').classList.remove('on');
+};
+$('menuBtn').onclick = () => $('side').classList.toggle('on');
+
+/* ================= RENDER ================= */
+function escapeHtml(s) {
+  return (s || '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
+
+function md(s) {
+  let t = escapeHtml(s);
+  t = t.replace(/```([\s\S]*?)```/g, (_, c) => `<code style="display:block;white-space:pre-wrap;padding:11px;margin:9px 0">${c.trim()}</code>`);
+  t = t.replace(/^#{2,3}\s+(.+)$/gm, '<h3>$1</h3>');
+  t = t.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+  t = t.replace(/(^|[^*])\*([^*\n]+)\*/g, '$1<em>$2</em>');
+  t = t.replace(/`([^`]+)`/g, '<code>$1</code>');
+  const lines = t.split('\n');
+  let out = '', list = null;
+  for (const ln of lines) {
+    const u = ln.match(/^\s*[-•]\s+(.*)$/), o = ln.match(/^\s*(\d+)[.)]\s+(.*)$/);
+    if (u || o) {
+      const tag = u ? 'ul' : 'ol';
+      if (list !== tag) { if (list) out += `</${list}>`; out += `<${tag}>`; list = tag; }
+      out += `<li>${u ? u[1] : o[2]}</li>`;
+    } else {
+      if (list) { out += `</${list}>`; list = null; }
+      if (ln.trim()) out += `<p>${ln}</p>`;
+    }
+  }
+  if (list) out += `</${list}>`;
+  return out || '<p></p>';
+}
+
+function srcChips(sources) {
+  const box = document.createElement('div'); box.className = 'sources';
+  [...new Map(sources.map(x => [x.subject + x.page, x])).values()].forEach((x, i) => {
+    const c = document.createElement('span');
+    c.className = 'src'; c.style.animationDelay = (i * 45) + 'ms';
+    c.textContent = `${x.subject} · pág. ${x.page}`;
+    box.appendChild(c);
+  });
+  return box;
+}
+
+function renderEmpty() {
+  $('stream').innerHTML = `
+    <div class="empty">
+      <h2>¿Qué quieres <span class="grad">estudiar</span> hoy?</h2>
+      <p>Elige el grado y la materia arriba. Te respondo con lo que dicen tus libros, citando la página exacta.</p>
+      <div class="chips">
+        <button class="chip">¿Qué es la fotosíntesis?</button>
+        <button class="chip">Explícame las ecuaciones de segundo grado</button>
+        <button class="chip">¿Cuáles fueron las causas de la Revolución Francesa?</button>
+        <button class="chip">Resume las leyes de Newton</button>
+      </div>
+    </div>`;
+  $('stream').querySelectorAll('.chip').forEach(b => b.onclick = () => {
+    $('q').value = b.textContent; $('q').focus(); autoGrow();
+  });
+}
+
+function addTurn(role, html) {
+  const t = document.createElement('div');
+  t.className = 'turn ' + (role === 'me' ? 'me' : 'bot');
+  t.innerHTML = `<div class="who">${role === 'me' ? 'Tú' : 'E'}</div><div class="bubble">${html}</div>`;
+  $('stream').appendChild(t);
+  scrollDown();
+  return t.querySelector('.bubble');
+}
+function scrollDown() {
+  const c = $('chat');
+  c.scrollTo({ top: c.scrollHeight, behavior: 'smooth' });
+}
+
+/* ================= ENVIAR ================= */
+const q = $('q');
+function autoGrow() { q.style.height = 'auto'; q.style.height = Math.min(q.scrollHeight, 170) + 'px'; }
+q.addEventListener('input', autoGrow);
+q.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); } });
+$('send').onclick = send;
+$('send').classList.add('pulse');
+
+async function send() {
+  const text = q.value.trim();
+  if (!text || BUSY) return;
+  BUSY = true; $('send').disabled = true; $('send').classList.remove('pulse');
+
+  if ($('stream').querySelector('.empty')) $('stream').innerHTML = '';
+  addTurn('me', md(text));
+  q.value = ''; autoGrow();
+
+  const bubble = addTurn('bot', '<span class="dots"><i></i><i></i><i></i></span>');
+  let acc = '', first = true;
+
+  try {
+    const resp = await fetch(API + '/api/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + TOKEN },
+      body: JSON.stringify({ q: text, conv_id: CONV, grade: $('grade').value, subject: $('subject').value, mode: $('mode').value })
+    });
+
+    if (!resp.ok) {
+      const j = await resp.json().catch(() => ({ error: 'Error del servidor' }));
+      throw new Error(j.detail || j.error || 'Error del servidor');
+    }
+
+    const reader = resp.body.getReader();
+    const dec = new TextDecoder();
+    let buf = '';
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buf += dec.decode(value, { stream: true });
+      const parts = buf.split('\n\n');
+      buf = parts.pop() || '';
+      for (const part of parts) {
+        const line = part.trim();
+        if (!line.startsWith('data:')) continue;
+        let j; try { j = JSON.parse(line.slice(5).trim()); } catch { continue; }
+        if (j.conv_id && !CONV) { CONV = j.conv_id; loadConvs(); }
+        if (typeof j.t === 'string') {
+          if (first) { bubble.innerHTML = ''; first = false; }
+          acc += j.t;
+          bubble.innerHTML = md(acc) + '<span class="cursor"></span>';
+          $('chat').scrollTop = $('chat').scrollHeight;
+        }
+        if (j.e) { acc += '\n\n⚠️ ' + j.e; bubble.innerHTML = md(acc); }
+        if (j.done) {
+          bubble.innerHTML = md(acc);
+          if (j.sources && j.sources.length) bubble.appendChild(srcChips(j.sources));
+          refreshMe();
+        }
+      }
+    }
+    if (!acc) bubble.innerHTML = '<p>No obtuve respuesta. Reintenta.</p>';
+  } catch (e) {
+    if (e.message === 'Failed to fetch') {
+      bubble.innerHTML = '<p style="color:#ff8b8b">No pude conectar con el servidor. Revisa tu conexión.</p>';
+      showNetError('fetch failed');
+    } else {
+      bubble.innerHTML = `<p style="color:#ff8b8b">${escapeHtml(e.message)}</p>`;
+    }
+  } finally {
+    BUSY = false; $('send').disabled = false; $('send').classList.add('pulse'); q.focus();
+    loadConvs();
+  }
+}
+
+async function openConv(id) {
+  CONV = id;
+  document.querySelectorAll('.conv').forEach(x => x.classList.remove('on'));
+  if (innerWidth <= 820) $('side').classList.remove('on');
+  $('stream').innerHTML = '';
+  try {
+    const r = await api('/api/conversations/' + id);
+    if (!r.messages.length) return renderEmpty();
+    r.messages.forEach(m => {
+      if (m.role === 'user') addTurn('me', md(m.content));
+      else {
+        const b = addTurn('bot', md(m.content));
+        let s = null;
+        try { s = m.sources ? JSON.parse(m.sources) : null; } catch {}
+        if (s && s.length) b.appendChild(srcChips(s));
+      }
+    });
+  } catch (e) {
+    $('stream').innerHTML = `<div class="empty"><h2>No se pudo abrir</h2><p>${escapeHtml(e.message)}</p></div>`;
+  }
+  loadConvs();
+}
+
+/* ================= INIT ================= */
+$('recOk').addEventListener('click', countUp, { once: true });
+(async function init() {
+  countUp();
+  if (TOKEN) {
+    try {
+      const r = await api('/api/me');
+      enterApp(TOKEN, r.user);
+      return;
+    } catch (e) {
+      if (!e.net) { localStorage.removeItem('estudia_token'); TOKEN = ''; }
+    }
+  }
+  setTab('login');
+})();
+</script>
+</body>
+</html>
