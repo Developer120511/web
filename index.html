@@ -350,8 +350,11 @@ main{display:flex;flex-direction:column;min-width:0;min-height:0;position:relati
       <div class="brand">
         <div class="mark">
           <svg viewBox="0 0 64 64" fill="none">
-            <path d="M18 17h12a5 5 0 015 5v25a4 4 0 00-4-4H18z" fill="url(#lg)"/>
-            <path d="M46 17H34a5 5 0 00-5 5v25a4 4 0 014-4h13z" fill="url(#lg)" opacity=".5"/>
+            <defs><linearGradient id="lg2" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0" stop-color="#e8c65a"/><stop offset="1" stop-color="#00e5c0"/>
+            </linearGradient></defs>
+            <path d="M18 17h12a5 5 0 015 5v25a4 4 0 00-4-4H18z" fill="url(#lg2)"/>
+            <path d="M46 17H34a5 5 0 00-5 5v25a4 4 0 014-4h13z" fill="url(#lg2)" opacity=".5"/>
           </svg>
         </div>
         <div><b>EstudIA</b><small>Secundaria Básica</small></div>
@@ -804,7 +807,6 @@ async function openConv(id) {
 }
 
 /* ================= INIT ================= */
-$('recOk').addEventListener('click', countUp, { once: true });
 (async function init() {
   countUp();
   if (TOKEN) {
