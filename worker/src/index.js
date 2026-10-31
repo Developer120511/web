@@ -104,6 +104,21 @@ async function bumpUsage(env, userId) {
   ).bind(userId, day).run();
 }
 
+async function runModel(env, model, messages, maxTokens = 1200, temperature = 0.35) {
+  const r = await env.AI.run(model, { messages, max_tokens: maxTokens, temperature });
+  const c = r?.choices?.[0]?.message?.content;
+  return (c || r?.response || '').trim();
+}
+
+function extractJson(txt) {
+  const s = String(txt || '').replace(/```json/gi, '```').replace(/```/g, '');
+  const a = s.indexOf('['), b = s.lastIndexOf(']');
+  if (a >= 0 && b > a) {
+    try { return JSON.parse(s.slice(a, b + 1)); } catch {}
+  }
+  return null;
+}
+
 /* ---------- recuperacion ---------- */
 
 async function retrieve(env, question, grade, subject, limit = 6) {
@@ -230,6 +245,79 @@ async function recover(req, env) {
   return json({ ok: true });
 }
 
+async function generateSet(req, env, user, kind) {
+  const b = await req.json().catch(() => null);
+  if (!b) return err('Datos incompletos');
+  const grade = b.grade || 'todos';
+  const subject = b.subject || 'todas';
+  const topic = String(b.topic || '').slice(0, 200);
+  const n = Math.min(8, Math.max(3, Number(b.n) || 5));
+  const mode = ['rapido', 'equilibrado', 'preciso'].includes(b.mode) ? b.mode : 'equilibrado';
+
+  const { left } = await usageLeft(env, user.id);
+  if (left <= 0) return json({ error: 'Límite diario alcanzado', detail: `Usaste tus ${DAILY_LIMIT} preguntas de hoy.` }, 429);
+
+  const query = topic || (subject !== 'todas' ? subject : 'contenido general');
+  const frags = await retrieve(env, query, grade, subject, 6);
+  if (!frags.length) return err('No encontré contenido para ese tema en los libros disponibles.', 404);
+
+  const ctx = frags.map((f, i) => `[${i + 1}] ${f.subject} · ${f.grade} · pág. ${f.page}\n${f.text}`).join('\n\n');
+  const sources = frags.map((f, i) => ({ n: i + 1, title: f.title, subject: f.subject, grade: f.grade, page: f.page }));
+
+  const common = `Contexto tomado de los libros de texto (usa SOLO esto):\n\n${ctx}\n\n`;
+  let messages;
+
+  if (kind === 'exam') {
+    messages = [
+      { role: 'system', content: 'Eres un profesor cubano de Secundaria Básica que crea exámenes. Respondes ÚNICAMENTE con un array JSON válido, sin texto antes ni después, sin markdown.' },
+      { role: 'user', content:
+`${common}Genera exactamente ${n} preguntas de opción múltiple sobre este contenido.
+
+Formato EXACTO (array JSON):
+[{"q":"enunciado de la pregunta","options":["A","B","C","D"],"correct":0,"explain":"explicación breve de por qué es correcta","ref":1}]
+
+Reglas:
+- 4 opciones por pregunta, solo una correcta.
+- "correct" es el índice (0-3) de la opción correcta.
+- "ref" es el número del fragmento [n] en que se basa.
+- Preguntas claras, en español, nivel secundaria, sin repetir.
+- Solo JSON.` }
+    ];
+  } else {
+    messages = [
+      { role: 'system', content: 'Eres un profesor cubano de Secundaria Básica que crea ejercicios. Respondes ÚNICAMENTE con un array JSON válido, sin texto antes ni después, sin markdown.' },
+      { role: 'user', content:
+`${common}Genera exactamente ${n} ejercicios prácticos sobre este contenido.
+
+Formato EXACTO (array JSON):
+[{"q":"enunciado del ejercicio","steps":["paso 1","paso 2"],"answer":"respuesta final","ref":1}]
+
+Reglas:
+- Ejercicios para resolver por el estudiante, con dificultad progresiva.
+- "steps" explica el procedimiento paso a paso (2 a 5 pasos).
+- "answer" es el resultado final.
+- "ref" es el número del fragmento [n] en que se basa.
+- Solo JSON.` }
+    ];
+  }
+
+  const model = MODELS[mode] || MODEL_MID;
+  let items = null, raw = '';
+  for (let attempt = 0; attempt < 2 && !items; attempt++) {
+    try { raw = await runModel(env, model, messages, 1800, 0.45); }
+    catch (e) {
+      try { raw = await runModel(env, model === MODEL_MID ? MODEL_BEST : MODEL_MID, messages, 1800, 0.45); }
+      catch (e2) { return err('El modelo no está disponible ahora mismo.', 503); }
+    }
+    items = extractJson(raw);
+  }
+  if (!Array.isArray(items) || !items.length) return err('No se pudo generar el contenido. Inténtalo otra vez.', 502);
+
+  items = items.slice(0, n);
+  await bumpUsage(env, user.id);
+  return json({ kind, items, sources, model });
+}
+
 async function deleteAccount(env, user) {
   await env.DB.batch([
     env.DB.prepare('DELETE FROM messages WHERE conv_id IN (SELECT id FROM conversations WHERE user_id=?)').bind(user.id),
@@ -342,7 +430,10 @@ async function chat(req, env, user) {
   }
 
   const frags = await retrieve(env, q, grade, subject, 6);
-  const sources = frags.map((f) => ({ title: f.title, subject: f.subject, grade: f.grade, page: f.page }));
+  const sources = frags.map((f, i) => ({
+    n: i + 1, title: f.title, subject: f.subject, grade: f.grade, page: f.page,
+    preview: (f.text || '').slice(0, 420)
+  }));
 
   if (!frags.length) {
     const msg = 'No encontré contenido sobre eso en los libros de esa materia. Prueba a elegir otra materia o a escribir la pregunta con otras palabras.';
@@ -464,6 +555,8 @@ export default {
       }
 
       if (p === '/api/account' && req.method === 'DELETE') return deleteAccount(env, user);
+      if (p === '/api/exam' && req.method === 'POST') return generateSet(req, env, user, 'exam');
+      if (p === '/api/exercises' && req.method === 'POST') return generateSet(req, env, user, 'exercises');
 
       if (p === '/api/chat' && req.method === 'POST') return chat(req, env, user);
 
