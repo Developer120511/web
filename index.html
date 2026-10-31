@@ -12,6 +12,7 @@
 <style>
 /* ============ BASE ============ */
 :root{
+  color-scheme:dark;
   --bg:#06080b; --bg-2:#0a0e14; --panel:rgba(15,20,28,.72); --panel-solid:#0f141c;
   --line:rgba(201,162,39,.14); --line-2:rgba(255,255,255,.07);
   --gold:#c9a227; --gold-2:#e8c65a; --ai:#00e5c0; --ai-2:#38f2d0; --violet:#7c5cff;
@@ -113,6 +114,8 @@ label{display:block;font-size:12px;font-weight:650;margin:15px 0 7px;color:#b9c4
 .msg.err{display:block;background:rgba(255,71,71,.1);color:#ff8b8b;border:1px solid rgba(255,71,71,.3);animation:shake .4s}
 .msg.ok{display:block;background:rgba(37,211,102,.1);color:#6ff0a5;border:1px solid rgba(37,211,102,.28)}
 @keyframes shake{25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
+.or{display:flex;align-items:center;gap:10px;margin:16px 0;color:var(--muted-2);font-size:11px;letter-spacing:.4px}
+.or::before,.or::after{content:"";flex:1;height:1px;background:rgba(255,255,255,.08)}
 .foot{text-align:center;font-size:11.5px;color:var(--muted-2);margin-top:16px;line-height:1.7}
 .foot a{color:var(--muted)}
 
@@ -164,15 +167,21 @@ aside{display:flex;flex-direction:column;min-height:0;border-right:1px solid var
   display:flex;align-items:center;justify-content:space-between;gap:6px}
 .side-credit a{color:#25d366;text-decoration:none;font-weight:600}
 .side-credit a:hover{text-decoration:underline}
+.danger-link{margin-top:9px;width:100%;border:1px solid rgba(255,71,71,.22);background:rgba(255,71,71,.06);
+  color:#ff9a9a;font-size:11px;font-weight:600;padding:7px;border-radius:8px;transition:.25s var(--ease)}
+.danger-link:hover{background:rgba(255,71,71,.14);border-color:rgba(255,71,71,.45);color:#ffc2c2}
 
 main{display:flex;flex-direction:column;min-width:0;min-height:0;position:relative}
 .top{display:flex;gap:8px;align-items:center;padding:12px 16px;border-bottom:1px solid var(--line-2);
   background:rgba(6,8,11,.7);backdrop-filter:blur(16px);flex-wrap:wrap;z-index:5}
-.sel{border:1px solid var(--line-2);border-radius:10px;padding:8px 11px;background:rgba(255,255,255,.04);
-  font-size:12.5px;font-weight:600;max-width:185px;color:#cfd8e3;transition:.25s var(--ease);appearance:none;
+.sel{border:1px solid var(--line-2);border-radius:10px;padding:8px 11px;background:#111720;
+  font-size:13px;font-weight:650;max-width:190px;color:#e6edf5;transition:.25s var(--ease);appearance:none;
   background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='%238b98a8' stroke-width='3'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
   background-repeat:no-repeat;background-position:right 10px center;padding-right:28px}
-.sel:hover{border-color:rgba(201,162,39,.4)}
+.sel:hover{border-color:rgba(201,162,39,.4);color:#fff}
+.sel option{background:#121821;color:#eef2f6;font-size:13.5px;padding:10px 12px}
+.sel option:checked,.sel option:hover{background:#1b2430;color:#fff}
+.sel optgroup{background:#0f141c;color:var(--gold-2);font-weight:700}
 .sel:focus{outline:none;border-color:rgba(0,229,192,.6);box-shadow:0 0 0 3px rgba(0,229,192,.1)}
 .menu-btn{display:none;border:1px solid var(--line-2);background:rgba(255,255,255,.04);border-radius:10px;padding:8px 11px}
 
@@ -216,6 +225,8 @@ main{display:flex;flex-direction:column;min-width:0;min-height:0;position:relati
   font-size:12.5px;color:#b9c4d1;transition:.28s var(--ease)}
 .chip:hover{border-color:rgba(0,229,192,.45);color:var(--ai);background:rgba(0,229,192,.07);transform:translateY(-2px);
   box-shadow:0 8px 22px rgba(0,229,192,.12)}
+.rero{border-style:dashed;color:var(--gold-2);border-color:rgba(201,162,39,.3);font-weight:650}
+.rero:hover{color:var(--gold-2);border-color:rgba(201,162,39,.6);background:rgba(201,162,39,.08);box-shadow:0 8px 22px rgba(201,162,39,.14)}
 
 .composer{padding:10px 16px 18px;background:linear-gradient(to top,rgba(6,8,11,.96) 45%,transparent)}
 .composer .wrap{display:flex;gap:10px;align-items:flex-end;background:rgba(15,20,28,.85);
@@ -248,12 +259,6 @@ main{display:flex;flex-direction:column;min-width:0;min-height:0;position:relati
   border:1px solid var(--line-2);color:var(--ink);padding:12px 20px;border-radius:99px;font-size:13px;z-index:80;
   box-shadow:var(--shadow);transition:transform .45s var(--ease),opacity .3s;opacity:0;backdrop-filter:blur(14px)}
 .toast.on{transform:translate(-50%,0);opacity:1}
-.wa-fab{position:fixed;right:18px;bottom:18px;z-index:55;width:52px;height:52px;border-radius:50%;
-  background:linear-gradient(135deg,#25d366,#1a9e4b);display:grid;place-items:center;text-decoration:none;
-  box-shadow:0 12px 30px rgba(37,211,102,.35);transition:transform .25s var(--ease)}
-.wa-fab:hover{transform:scale(1.09) rotate(-4deg)}
-.wa-fab::after{content:"";position:absolute;inset:0;border-radius:50%;border:2px solid rgba(37,211,102,.5);animation:ping 2.2s infinite}
-.wa-fab svg{width:26px;height:26px;fill:#fff}
 
 @media (max-width:900px){
   .auth-wrap{grid-template-columns:1fr;gap:22px;max-width:440px}
@@ -272,7 +277,6 @@ main{display:flex;flex-direction:column;min-width:0;min-height:0;position:relati
   .sel{max-width:128px;font-size:11.5px;padding-right:24px}
   .chat{padding:18px 12px 4px}
   .empty h2{font-size:22px}
-  .wa-fab{width:46px;height:46px}
 }
 @media (prefers-reduced-motion:reduce){
   *{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}
@@ -338,6 +342,10 @@ main{display:flex;flex-direction:column;min-width:0;min-height:0;position:relati
       <input id="pass" class="inp" type="password" placeholder="Mínimo 8 caracteres" autocomplete="current-password">
       <button id="go" class="btn">Entrar</button>
       <div id="formMsg" class="msg"></div>
+      <div id="gsiArea" style="display:none;margin-top:18px">
+        <div class="or"><span>o entra con</span></div>
+        <div id="gsiBtn" style="display:flex;justify-content:center"></div>
+      </div>
       <div class="foot">Tus datos viajan cifrados y la contraseña nunca sale de tu navegador.<br>¿Problemas? <a href="https://wa.me/5355857689" target="_blank" rel="noopener">Escríbeme por WhatsApp</a></div>
     </div>
   </div>
@@ -374,6 +382,7 @@ main{display:flex;flex-direction:column;min-width:0;min-height:0;position:relati
         <span>Por Daniel A. Tellez</span>
         <a href="https://wa.me/5355857689" target="_blank" rel="noopener">WhatsApp</a>
       </div>
+      <button class="danger-link" id="delAcc">Eliminar mi cuenta</button>
     </div>
   </aside>
 
@@ -408,9 +417,6 @@ main{display:flex;flex-direction:column;min-width:0;min-height:0;position:relati
   </main>
 </div>
 
-<a class="wa-fab" href="https://wa.me/5355857689" target="_blank" rel="noopener" title="Escríbeme por WhatsApp" aria-label="WhatsApp">
-  <svg viewBox="0 0 24 24"><path d="M17.5 14.4c-.3-.2-1.7-.9-2-1-.3-.1-.5-.2-.7.1-.2.3-.7 1-.9 1.2-.2.2-.3.2-.6.1-1.5-.8-2.6-1.9-3.3-3.3-.1-.3 0-.4.1-.5.2-.2.5-.6.6-.8.1-.2.1-.4 0-.5-.1-.2-.7-1.6-.9-2.1-.2-.5-.5-.4-.7-.4h-.6c-.2 0-.5.1-.8.4-.3.3-1 1-1 2.4s1 2.8 1.2 3c.1.2 1.9 3 4.7 4.1 1.9.8 2.6.8 3.5.7.6-.1 1.7-.7 1.9-1.4.2-.7.2-1.2.2-1.4 0-.1-.2-.2-.4-.3z"/><path d="M12 2a10 10 0 00-8.6 15L2 22l5.2-1.4A10 10 0 1012 2zm0 18a8 8 0 01-4.1-1.1l-.3-.2-3 .8.8-2.9-.2-.3A8 8 0 1112 20z"/></svg>
-</a>
 
 <!-- modal recuperacion -->
 <div class="modal" id="modal">
@@ -430,6 +436,20 @@ main{display:flex;flex-direction:column;min-width:0;min-height:0;position:relati
     <div id="netDetail" class="msg err" style="display:block;margin-top:12px"></div>
     <button class="btn" id="netRetry">Reintentar</button>
     <div class="foot" style="margin-top:14px">Si sigue fallando, <a href="https://wa.me/5355857689" target="_blank" rel="noopener">escríbeme por WhatsApp</a> y lo resolvemos.</div>
+  </div>
+</div>
+
+<div class="modal" id="delModal">
+  <div class="card">
+    <h2 style="color:#ff9a9a">¿Eliminar tu cuenta?</h2>
+    <p class="sub">Se borrarán tu historial, tus conversaciones y tu cuenta. <b style="color:#ffc2c2">Esta acción no se puede deshacer.</b></p>
+    <label for="delConfirm">Escribe <b style="color:#fff">ELIMINAR</b> para confirmar</label>
+    <input id="delConfirm" class="inp" type="text" placeholder="ELIMINAR" autocomplete="off" spellcheck="false">
+    <div id="delMsg" class="msg"></div>
+    <div style="display:flex;gap:9px;margin-top:18px">
+      <button class="btn" id="delCancel" style="margin:0;background:rgba(255,255,255,.07);color:#dfe6ee;box-shadow:none">Cancelar</button>
+      <button class="btn" id="delGo" style="margin:0;background:linear-gradient(135deg,#e5484d,#b42318);color:#fff;box-shadow:0 10px 26px rgba(229,72,77,.3)">Eliminar</button>
+    </div>
   </div>
 </div>
 
@@ -472,6 +492,40 @@ function countUp() {
     };
     requestAnimationFrame(step);
   });
+}
+
+/* ================= GOOGLE ================= */
+/* Pega aquí tu Client ID de Google Cloud para activar "Entrar con Google".
+   Si queda vacío, la web funciona solo con correo y contraseña. */
+const GOOGLE_CLIENT_ID = '';
+
+function initGoogle() {
+  if (!GOOGLE_CLIENT_ID) return;
+  const area = $('gsiArea'); if (area) area.style.display = 'block';
+  const sc = document.createElement('script');
+  sc.src = 'https://accounts.google.com/gsi/client';
+  sc.async = true; sc.defer = true;
+  sc.onload = () => {
+    try {
+      google.accounts.id.initialize({ client_id: GOOGLE_CLIENT_ID, callback: onGoogleCredential });
+      google.accounts.id.renderButton($('gsiBtn'), {
+        theme: 'filled_black', size: 'large', text: 'continue_with',
+        shape: 'pill', logo_alignment: 'left', locale: 'es', width: 300
+      });
+    } catch (e) { area.style.display = 'none'; }
+  };
+  sc.onerror = () => { area.style.display = 'none'; };
+  document.head.appendChild(sc);
+}
+
+async function onGoogleCredential(resp) {
+  try {
+    const r = await api('/api/google', { method: 'POST', body: JSON.stringify({ credential: resp.credential }) });
+    enterApp(r.token, r.user);
+    toast('Bienvenido, ' + (r.user.name || 'estudiante'));
+  } catch (e) {
+    if (e.net) showNetError(e.detail); else showMsg(e.message);
+  }
 }
 
 /* ================= API ================= */
@@ -582,6 +636,34 @@ function enterApp(token, user) {
   boot();
 }
 
+/* --- eliminar cuenta --- */
+$('delAcc').onclick = () => {
+  $('delConfirm').value = '';
+  $('delMsg').className = 'msg';
+  $('delModal').classList.add('on');
+  setTimeout(() => $('delConfirm').focus(), 120);
+};
+$('delCancel').onclick = () => $('delModal').classList.remove('on');
+$('delConfirm').addEventListener('keydown', e => { if (e.key === 'Enter') $('delGo').click(); });
+$('delGo').onclick = async () => {
+  const v = $('delConfirm').value.trim().toUpperCase();
+  const m = $('delMsg');
+  if (v !== 'ELIMINAR') { m.className = 'msg err'; m.textContent = 'Escribe ELIMINAR para confirmar.'; return; }
+  $('delGo').disabled = true; $('delGo').textContent = 'Eliminando…';
+  try {
+    await api('/api/account', { method: 'DELETE' });
+    localStorage.removeItem('estudia_token');
+    TOKEN = '';
+    $('delModal').classList.remove('on');
+    toast('Tu cuenta fue eliminada');
+    setTimeout(() => location.reload(), 900);
+  } catch (e) {
+    m.className = 'msg err';
+    m.textContent = e.net ? 'No se pudo conectar con el servidor.' : e.message;
+    $('delGo').disabled = false; $('delGo').textContent = 'Eliminar';
+  }
+};
+
 $('logout').onclick = () => {
   localStorage.removeItem('estudia_token'); TOKEN = ''; CONV = null; location.reload();
 };
@@ -679,21 +761,56 @@ function srcChips(sources) {
   return box;
 }
 
+const CHIP_POOL = [
+  '¿Qué es la fotosíntesis?', '¿Cuáles son las partes de la célula?',
+  '¿Qué diferencia hay entre célula animal y vegetal?', '¿Cómo funciona el sistema digestivo?',
+  'Explícame las ecuaciones de segundo grado', '¿Qué es el teorema de Pitágoras?',
+  '¿Cómo calculo el área de un triángulo?', '¿Qué es una función lineal?',
+  '¿Cómo resuelvo un sistema de ecuaciones?', '¿Qué son los números irracionales?',
+  'Resume las leyes de Newton', '¿Qué es la energía cinética?',
+  '¿Cuál es la diferencia entre masa y peso?', '¿Qué dice la ley de Ohm?',
+  '¿Qué es un enlace químico?', '¿Cuál es la diferencia entre mezcla y compuesto?',
+  '¿Qué es el pH y cómo se mide?', '¿Cuáles fueron las causas de la Revolución Francesa?',
+  '¿Quién fue José Martí?', '¿Qué fue la Revolución Industrial?',
+  '¿Cuáles fueron las causas de la independencia de Cuba?', '¿Qué es el relieve?',
+  '¿Cuáles son los ríos más importantes de Cuba?', '¿Qué es una metáfora?',
+  '¿Cómo se estructura un texto argumentativo?', '¿Qué son los verbos irregulares?',
+  '¿Cuándo se usa el presente simple en inglés?', '¿Qué es un algoritmo?',
+  '¿Qué diferencia hay entre hardware y software?', '¿Qué es la energía renovable?',
+  '¿Cómo se forman los huracanes?', '¿Qué es la colonial y qué tipos existen?'
+];
+
+function pickChips(n = 4) {
+  const pool = [...CHIP_POOL];
+  for (let i = pool.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [pool[i], pool[j]] = [pool[j], pool[i]];
+  }
+  return pool.slice(0, n);
+}
+
 function renderEmpty() {
   $('stream').innerHTML = `
     <div class="empty">
       <h2>¿Qué quieres <span class="grad">estudiar</span> hoy?</h2>
       <p>Elige el grado y la materia arriba. Te respondo con lo que dicen tus libros, citando la página exacta.</p>
-      <div class="chips">
-        <button class="chip">¿Qué es la fotosíntesis?</button>
-        <button class="chip">Explícame las ecuaciones de segundo grado</button>
-        <button class="chip">¿Cuáles fueron las causas de la Revolución Francesa?</button>
-        <button class="chip">Resume las leyes de Newton</button>
-      </div>
+      <div class="chips" id="chipsBox"></div>
     </div>`;
-  $('stream').querySelectorAll('.chip').forEach(b => b.onclick = () => {
-    $('q').value = b.textContent; $('q').focus(); autoGrow();
+  const box = $('chipsBox');
+  box.innerHTML = '';
+  pickChips(4).forEach((txt, i) => {
+    const b = document.createElement('button');
+    b.className = 'chip';
+    b.style.animation = `rise .5s var(--ease) ${i * 70}ms both`;
+    b.textContent = txt;
+    b.onclick = () => { $('q').value = txt; $('q').focus(); autoGrow(); };
+    box.appendChild(b);
   });
+  const re = document.createElement('button');
+  re.className = 'chip rero';
+  re.innerHTML = '🔄 Otras ideas';
+  re.onclick = renderEmpty;
+  box.appendChild(re);
 }
 
 function addTurn(role, html) {
@@ -809,6 +926,7 @@ async function openConv(id) {
 /* ================= INIT ================= */
 (async function init() {
   countUp();
+  initGoogle();
   if (TOKEN) {
     try {
       const r = await api('/api/me');
