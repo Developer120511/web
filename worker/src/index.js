@@ -230,6 +230,43 @@ async function recover(req, env) {
   return json({ ok: true });
 }
 
+async function deleteAccount(env, user) {
+  await env.DB.batch([
+    env.DB.prepare('DELETE FROM messages WHERE conv_id IN (SELECT id FROM conversations WHERE user_id=?)').bind(user.id),
+    env.DB.prepare('DELETE FROM conversations WHERE user_id=?').bind(user.id),
+    env.DB.prepare('DELETE FROM usage WHERE user_id=?').bind(user.id),
+    env.DB.prepare('DELETE FROM sessions WHERE user_id=?').bind(user.id),
+    env.DB.prepare('DELETE FROM users WHERE id=?').bind(user.id),
+  ]);
+  return json({ ok: true });
+}
+
+async function googleLogin(req, env) {
+  const b = await req.json().catch(() => null);
+  if (!b || !b.credential) return err('Falta la credencial de Google');
+  const r = await fetch('https://oauth2.googleapis.com/tokeninfo?id_token=' + encodeURIComponent(String(b.credential)));
+  if (!r.ok) return err('La credencial de Google no es válida', 401);
+  const p = await r.json();
+  if (!env.GOOGLE_CLIENT_ID) return err('El acceso con Google no está configurado todavía', 503);
+  if (p.aud !== env.GOOGLE_CLIENT_ID) return err('Credencial de otra aplicación', 401);
+  if (String(p.email_verified) !== 'true') return err('Ese correo de Google no está verificado', 401);
+  if (!p.email) return err('Google no devolvió el correo', 401);
+
+  const email = String(p.email).toLowerCase();
+  let u = await env.DB.prepare('SELECT id,email,name FROM users WHERE email=?').bind(email).first();
+  if (!u) {
+    const r2 = await env.DB.prepare(
+      'INSERT INTO users (email, name, salt, verifier, recovery) VALUES (?,?,?,?,?)'
+    ).bind(email, (p.name || '').slice(0, 60), 'google', 'google:' + randHex(16), null).run();
+    u = { id: r2.meta.last_row_id, email, name: p.name || '' };
+  }
+  const token = randHex(32);
+  const exp = new Date(Date.now() + 30 * 864e5).toISOString();
+  await env.DB.prepare('INSERT INTO sessions (token,user_id,expires_at) VALUES (?,?,?)')
+    .bind(token, u.id, exp).run();
+  return json({ token, user: { id: u.id, email: u.email, name: u.name } });
+}
+
 async function catalog(env) {
   const r = await env.DB.prepare(
     `SELECT grade, subject, title, pages, words FROM books ORDER BY grade, subject`
@@ -383,6 +420,7 @@ export default {
       if (p === '/api/register' && req.method === 'POST') return register(req, env);
       if (p === '/api/login' && req.method === 'POST') return login(req, env);
       if (p === '/api/recover' && req.method === 'POST') return recover(req, env);
+      if (p === '/api/google' && req.method === 'POST') return googleLogin(req, env);
 
       const user = await auth(req, env);
       if (!user) return err('No autenticado', 401);
@@ -424,6 +462,8 @@ export default {
           .bind(Number(m[1]), user.id).run();
         return json({ ok: true });
       }
+
+      if (p === '/api/account' && req.method === 'DELETE') return deleteAccount(env, user);
 
       if (p === '/api/chat' && req.method === 'POST') return chat(req, env, user);
 
