@@ -183,6 +183,10 @@ main{display:flex;flex-direction:column;min-width:0;min-height:0;position:relati
 .sel option:checked,.sel option:hover{background:#1b2430;color:#fff}
 .sel optgroup{background:#0f141c;color:var(--gold-2);font-weight:700}
 .sel:focus{outline:none;border-color:rgba(0,229,192,.6);box-shadow:0 0 0 3px rgba(0,229,192,.1)}
+.tool{border:1px solid var(--line-2);background:#111720;border-radius:10px;padding:8px 12px;font-size:12.5px;
+  font-weight:650;color:#cfd8e3;transition:.25s var(--ease);white-space:nowrap}
+.tool:hover{border-color:rgba(0,229,192,.55);color:var(--ai);background:rgba(0,229,192,.08);transform:translateY(-1px)}
+.tool:disabled{opacity:.5;cursor:wait}
 .menu-btn{display:none;border:1px solid var(--line-2);background:rgba(255,255,255,.04);border-radius:10px;padding:8px 11px}
 
 .chat{flex:1;overflow-y:auto;padding:26px 16px 8px;scroll-behavior:smooth;scrollbar-width:thin}
@@ -260,6 +264,47 @@ main{display:flex;flex-direction:column;min-width:0;min-height:0;position:relati
   box-shadow:var(--shadow);transition:transform .45s var(--ease),opacity .3s;opacity:0;backdrop-filter:blur(14px)}
 .toast.on{transform:translate(-50%,0);opacity:1}
 
+
+/* ---- herramientas: examen / ejercicios ---- */
+.qitem{background:rgba(255,255,255,.03);border:1px solid var(--line-2);border-radius:14px;padding:15px 16px;margin-bottom:12px}
+.qitem h4{margin:0 0 11px;font-size:14.5px;line-height:1.5;font-weight:650;color:#fff}
+.qopt{display:flex;gap:10px;align-items:flex-start;padding:10px 12px;border:1px solid var(--line-2);
+  border-radius:10px;margin-bottom:7px;cursor:pointer;font-size:13.8px;line-height:1.45;transition:.2s var(--ease)}
+.qopt:hover{border-color:rgba(0,229,192,.4);background:rgba(0,229,192,.05)}
+.qopt.sel{border-color:rgba(0,229,192,.7);background:rgba(0,229,192,.1)}
+.qopt.ok{border-color:rgba(37,211,102,.7);background:rgba(37,211,102,.12)}
+.qopt.bad{border-color:rgba(255,71,71,.6);background:rgba(255,71,71,.1)}
+.qopt b{width:20px;flex:0 0 20px;height:20px;border-radius:50%;background:rgba(255,255,255,.08);
+  display:grid;place-items:center;font-size:11px;color:var(--muted)}
+.qopt.sel b{background:var(--ai);color:#04211c}
+.qopt.ok b{background:#25d366;color:#04211c}
+.qopt.bad b{background:#ff4747;color:#fff}
+.qexp{margin-top:9px;padding:10px 12px;border-left:2px solid var(--ai);background:rgba(0,229,192,.06);
+  border-radius:0 8px 8px 0;font-size:12.8px;color:#bfe9e2;line-height:1.55;display:none}
+.qexp.on{display:block}
+.score{text-align:center;padding:18px;border-radius:14px;background:rgba(255,255,255,.04);
+  border:1px solid var(--line-2);margin-bottom:14px}
+.score b{font-size:30px;display:block;letter-spacing:-1px}
+.exitem{background:rgba(255,255,255,.03);border:1px solid var(--line-2);border-radius:14px;padding:15px 16px;margin-bottom:12px}
+.exitem .eq{font-size:14.4px;line-height:1.55;margin:0 0 10px;color:#fff;font-weight:600}
+.exsol{display:none;margin-top:10px;padding-top:11px;border-top:1px dashed rgba(255,255,255,.1)}
+.exsol.on{display:block;animation:rise .35s var(--ease)}
+.exsol ol{margin:0 0 8px;padding-left:19px;font-size:13px;line-height:1.65;color:#cfd8e3}
+.exsol .ans{display:inline-block;background:rgba(37,211,102,.12);border:1px solid rgba(37,211,102,.35);
+  color:#7ef0a8;padding:6px 12px;border-radius:9px;font-weight:700;font-size:13px}
+.toggle-sol{border:1px solid rgba(0,229,192,.3);background:rgba(0,229,192,.07);color:var(--ai);
+  border-radius:8px;padding:6px 12px;font-size:12px;font-weight:650;transition:.2s}
+.toggle-sol:hover{background:rgba(0,229,192,.16)}
+.cite-txt{background:rgba(255,255,255,.04);border:1px solid var(--line-2);border-radius:12px;padding:14px;
+  font-size:13.4px;line-height:1.7;color:#cfd8e3;max-height:300px;overflow-y:auto;white-space:pre-wrap}
+.src{cursor:pointer}
+.loader{text-align:center;padding:30px;color:var(--muted);font-size:13.5px}
+.loader .dots{display:inline-flex;gap:5px;vertical-align:middle;margin-left:6px}
+.modal .card.wide{max-width:640px;width:100%}
+.acts{display:flex;gap:9px;margin-top:16px;flex-wrap:wrap}
+.acts .btn{flex:1;margin:0;min-width:130px}
+.acts .ghost{background:rgba(255,255,255,.07);color:#dfe6ee;box-shadow:none}
+
 @media (max-width:900px){
   .auth-wrap{grid-template-columns:1fr;gap:22px;max-width:440px}
   .hero-side{text-align:center}
@@ -326,26 +371,13 @@ main{display:flex;flex-direction:column;min-width:0;min-height:0;position:relati
     </div>
 
     <div class="card">
-      <h2 id="cardTitle">Bienvenido de vuelta</h2>
-      <p class="sub" id="cardSub">Entra para continuar estudiando.</p>
-      <div class="tabs">
-        <button id="tabLogin" class="on">Entrar</button>
-        <button id="tabReg">Crear cuenta</button>
+      <h2>Entra con tu cuenta</h2>
+      <p class="sub">El acceso es únicamente con Google. Sin contraseñas, sin registros.</p>
+      <div id="gsiBtn" style="display:flex;justify-content:center;margin-top:24px;min-height:46px"></div>
+      <div id="gsiHint" style="display:none;text-align:center;font-size:12.5px;color:var(--muted);margin-top:16px">
+        Cargando Google… si no aparece el botón, tu red está bloqueando <b>accounts.google.com</b>.
       </div>
-      <div id="fName" style="display:none">
-        <label for="name">Nombre</label>
-        <input id="name" class="inp" type="text" placeholder="Tu nombre completo" autocomplete="name">
-      </div>
-      <label for="email">Correo</label>
-      <input id="email" class="inp" type="email" placeholder="tucorreo@ejemplo.com" autocomplete="username" spellcheck="false">
-      <label for="pass">Contraseña</label>
-      <input id="pass" class="inp" type="password" placeholder="Mínimo 8 caracteres" autocomplete="current-password">
-      <button id="go" class="btn">Entrar</button>
       <div id="formMsg" class="msg"></div>
-      <div id="gsiArea" style="display:none;margin-top:18px">
-        <div class="or"><span>o entra con</span></div>
-        <div id="gsiBtn" style="display:flex;justify-content:center"></div>
-      </div>
       <div class="foot">Tus datos viajan cifrados y la contraseña nunca sale de tu navegador.<br>¿Problemas? <a href="https://wa.me/5355857689" target="_blank" rel="noopener">Escríbeme por WhatsApp</a></div>
     </div>
   </div>
@@ -396,6 +428,8 @@ main{display:flex;flex-direction:column;min-width:0;min-height:0;position:relati
         <option value="9no">9no grado</option>
       </select>
       <select class="sel" id="subject" title="Materia"></select>
+      <button class="tool" id="btnExam" title="Generar un examen de práctica">🎯 Examen</button>
+      <button class="tool" id="btnEx" title="Generar ejercicios con solución">📝 Ejercicios</button>
       <select class="sel" id="mode" title="Modo de respuesta">
         <option value="rapido">⚡ Rápido</option>
         <option value="equilibrado" selected>⚖️ Equilibrado</option>
@@ -417,16 +451,6 @@ main{display:flex;flex-direction:column;min-width:0;min-height:0;position:relati
   </main>
 </div>
 
-
-<!-- modal recuperacion -->
-<div class="modal" id="modal">
-  <div class="card">
-    <h2>Guarda tu código</h2>
-    <p class="sub">Si olvidas tu contraseña, este código es la única forma de recuperar tu cuenta. No se volverá a mostrar.</p>
-    <div class="code" id="recCode">—</div>
-    <button class="btn" id="recOk">Ya lo guardé</button>
-  </div>
-</div>
 
 <!-- modal problema de conexión -->
 <div class="modal" id="netModal">
@@ -450,6 +474,80 @@ main{display:flex;flex-direction:column;min-width:0;min-height:0;position:relati
       <button class="btn" id="delCancel" style="margin:0;background:rgba(255,255,255,.07);color:#dfe6ee;box-shadow:none">Cancelar</button>
       <button class="btn" id="delGo" style="margin:0;background:linear-gradient(135deg,#e5484d,#b42318);color:#fff;box-shadow:0 10px 26px rgba(229,72,77,.3)">Eliminar</button>
     </div>
+  </div>
+</div>
+
+
+<!-- ===== examen ===== -->
+<div class="modal" id="examModal">
+  <div class="card">
+    <h2>🎯 Modo examen</h2>
+    <p class="sub">Genero preguntas tipo test del tema que elijas, con corrección y explicación.</p>
+    <label for="exTopic">Tema o contenido (opcional)</label>
+    <input id="exTopic" class="inp" type="text" placeholder="Ej: ecuaciones de segundo grado" maxlength="120">
+    <label for="exN">Cantidad de preguntas</label>
+    <select id="exN" class="inp">
+      <option value="3">3 preguntas</option>
+      <option value="5" selected>5 preguntas</option>
+      <option value="8">8 preguntas</option>
+    </select>
+    <div class="acts">
+      <button class="btn ghost" id="examCancel">Cancelar</button>
+      <button class="btn" id="examGo">Generar examen</button>
+    </div>
+    <div class="foot">Se usan el grado y la materia seleccionados arriba · consume 1 pregunta de tu cuota</div>
+  </div>
+</div>
+
+<!-- ===== quiz ===== -->
+<div class="modal" id="quizModal">
+  <div class="card wide">
+    <h2 id="quizTitle">Examen</h2>
+    <p class="sub" id="quizSub">Elige una opción en cada pregunta.</p>
+    <div id="quizBody" style="max-height:58vh;overflow-y:auto;padding-right:4px"></div>
+    <div class="acts">
+      <button class="btn ghost" id="quizClose">Cerrar</button>
+      <button class="btn" id="quizCheck">Corregir</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== ejercicios ===== -->
+<div class="modal" id="exModal">
+  <div class="card">
+    <h2>📝 Generador de ejercicios</h2>
+    <p class="sub">Ejercicios para resolver, con el procedimiento y la respuesta final.</p>
+    <label for="exTopic2">Tema o contenido (opcional)</label>
+    <input id="exTopic2" class="inp" type="text" placeholder="Ej: fracciones algebraicas" maxlength="120">
+    <label for="exN2">Cantidad</label>
+    <select id="exN2" class="inp">
+      <option value="3">3 ejercicios</option>
+      <option value="5" selected>5 ejercicios</option>
+    </select>
+    <div class="acts">
+      <button class="btn ghost" id="exCancel">Cancelar</button>
+      <button class="btn" id="exGo">Generar</button>
+    </div>
+    <div class="foot">Usa el grado y la materia de arriba · consume 1 pregunta de tu cuota</div>
+  </div>
+</div>
+
+<div class="modal" id="exListModal">
+  <div class="card wide">
+    <h2>📝 Ejercicios</h2>
+    <p class="sub">Intenta resolverlos antes de mirar la solución.</p>
+    <div id="exListBody" style="max-height:58vh;overflow-y:auto;padding-right:4px"></div>
+    <div class="acts"><button class="btn ghost" id="exListClose">Cerrar</button></div>
+  </div>
+</div>
+
+<!-- ===== cita ===== -->
+<div class="modal" id="citeModal">
+  <div class="card">
+    <h2 id="citeTitle">Fuente</h2>
+    <p class="sub" id="citeSub"></p>
+    <div class="cite-txt" id="citeText"></div>
+    <div class="acts"><button class="btn ghost" id="citeClose">Cerrar</button></div>
   </div>
 </div>
 
@@ -497,11 +595,11 @@ function countUp() {
 /* ================= GOOGLE ================= */
 /* Pega aquí tu Client ID de Google Cloud para activar "Entrar con Google".
    Si queda vacío, la web funciona solo con correo y contraseña. */
-const GOOGLE_CLIENT_ID = '';
+const GOOGLE_CLIENT_ID = '79928752655-odgdcprfrkjrl6nj3bu8s6fd5c6fomh0.apps.googleusercontent.com';
 
 function initGoogle() {
   if (!GOOGLE_CLIENT_ID) return;
-  const area = $('gsiArea'); if (area) area.style.display = 'block';
+  const hint = $('gsiHint'); if (hint) hint.style.display = 'block';
   const sc = document.createElement('script');
   sc.src = 'https://accounts.google.com/gsi/client';
   sc.async = true; sc.defer = true;
@@ -512,9 +610,10 @@ function initGoogle() {
         theme: 'filled_black', size: 'large', text: 'continue_with',
         shape: 'pill', logo_alignment: 'left', locale: 'es', width: 300
       });
-    } catch (e) { area.style.display = 'none'; }
+      const h = $('gsiHint'); if (h) h.style.display = 'none';
+    } catch (e) { const h = $('gsiHint'); if (h) h.textContent = 'No se pudo cargar Google en este navegador.'; }
   };
-  sc.onerror = () => { area.style.display = 'none'; };
+  sc.onerror = () => { const h = $('gsiHint'); if (h) h.textContent = 'Tu red bloquea accounts.google.com. Prueba con otros datos o escríbeme por WhatsApp.'; };
   document.head.appendChild(sc);
 }
 
@@ -548,19 +647,6 @@ async function api(path, opts = {}) {
 }
 
 /* ================= AUTH ================= */
-function setTab(m) {
-  AUTHMODE = m;
-  $('tabLogin').classList.toggle('on', m === 'login');
-  $('tabReg').classList.toggle('on', m === 'register');
-  $('fName').style.display = m === 'register' ? 'block' : 'none';
-  $('go').textContent = m === 'register' ? 'Crear cuenta' : 'Entrar';
-  $('cardTitle').textContent = m === 'register' ? 'Crea tu cuenta' : 'Bienvenido de vuelta';
-  $('cardSub').textContent = m === 'register' ? 'Es gratis y toma 20 segundos.' : 'Entra para continuar estudiando.';
-  $('pass').autocomplete = m === 'register' ? 'new-password' : 'current-password';
-  showMsg('');
-}
-$('tabLogin').onclick = () => setTab('login');
-$('tabReg').onclick = () => setTab('register');
 
 function showMsg(t, ok) {
   const el = $('formMsg');
@@ -574,41 +660,6 @@ function randCode() {
   return [...a].map(x => abc[x % abc.length]).join('').replace(/(.{4})(?=.)/g, '$1-');
 }
 
-$('go').onclick = async () => {
-  const email = $('email').value.trim();
-  const pass = $('pass').value;
-  if (!email || !pass) return showMsg('Escribe tu correo y tu contraseña.');
-  if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return showMsg('Ese correo no parece válido.');
-  if (AUTHMODE === 'register' && pass.length < 8) return showMsg('La contraseña necesita al menos 8 caracteres.');
-
-  $('go').disabled = true;
-  showMsg('Procesando…', true);
-  try {
-    const verifier = await derive(pass, saltOf(email));
-    if (AUTHMODE === 'login') {
-      const r = await api('/api/login', { method: 'POST', body: JSON.stringify({ email, verifier }) });
-      enterApp(r.token, r.user);
-      toast('Bienvenido de nuevo, ' + (r.user.name || 'estudiante'));
-    } else {
-      const recovery = randCode();
-      const r = await api('/api/register', {
-        method: 'POST',
-        body: JSON.stringify({
-          email, name: $('name').value.trim() || 'Estudiante',
-          salt: saltOf(email), verifier, recovery: recovery.toLowerCase()
-        })
-      });
-      $('recCode').textContent = recovery;
-      $('modal').classList.add('on');
-      enterApp(r.token, r.user);
-    }
-  } catch (e) {
-    if (e.net) { showMsg(''); showNetError(e.detail); }
-    else if (/ya está registrado/i.test(e.message)) showMsg('Ese correo ya tiene cuenta. Prueba a entrar.');
-    else if (/incorrectos/i.test(e.message)) showMsg('Correo o contraseña incorrectos.');
-    else showMsg(e.message);
-  } finally { $('go').disabled = false; }
-};
 
 function showNetError(detail) {
   $('netDetail').textContent = 'Detalle técnico: ' + (detail || 'sin respuesta') + ' · API: ' + API;
@@ -623,7 +674,6 @@ $('netRetry').onclick = async () => {
     else showNetError('HTTP ' + r.status);
   } catch (e) { showNetError(e.message); }
 };
-$('recOk').onclick = () => { $('modal').classList.remove('on'); toast('Código guardado. No lo pierdas.'); };
 
 function enterApp(token, user) {
   TOKEN = token;
@@ -756,6 +806,8 @@ function srcChips(sources) {
     const c = document.createElement('span');
     c.className = 'src'; c.style.animationDelay = (i * 45) + 'ms';
     c.textContent = `${x.subject} · pág. ${x.page}`;
+    c.title = 'Ver el fragmento del libro';
+    c.onclick = () => showCite(x);
     box.appendChild(c);
   });
   return box;
@@ -923,6 +975,161 @@ async function openConv(id) {
   loadConvs();
 }
 
+
+/* ================= CITAS CON VISTA PREVIA ================= */
+function showCite(src) {
+  $('citeTitle').textContent = src.title || src.subject || 'Fuente';
+  $('citeSub').textContent = [src.subject, src.grade, src.page ? ('página ' + src.page) : '']
+    .filter(Boolean).join(' · ');
+  $('citeText').textContent = src.preview || 'Este fragmento no tiene vista previa guardada.';
+  $('citeModal').classList.add('on');
+}
+$('citeClose').onclick = () => $('citeModal').classList.remove('on');
+
+/* ================= MODO EXAMEN ================= */
+let QUIZ = null;
+
+$('btnExam').onclick = () => { $('exTopic').value = ''; $('examModal').classList.add('on'); };
+$('examCancel').onclick = () => $('examModal').classList.remove('on');
+$('quizClose').onclick = () => $('quizModal').classList.remove('on');
+
+$('examGo').onclick = async () => {
+  const topic = $('exTopic').value.trim();
+  const n = $('exN').value;
+  $('examModal').classList.remove('on');
+  $('quizTitle').textContent = 'Preparando el examen…';
+  $('quizSub').textContent = 'Esto toma unos segundos.';
+  $('quizBody').innerHTML = '<div class="loader">Generando preguntas<span class="dots"><i></i><i></i><i></i></span></div>';
+  $('quizCheck').style.display = 'none';
+  $('quizModal').classList.add('on');
+  try {
+    const r = await api('/api/exam', {
+      method: 'POST',
+      body: JSON.stringify({ topic, n, grade: $('grade').value, subject: $('subject').value, mode: $('mode').value })
+    });
+    QUIZ = r.items.map(q => ({ ...q, pick: null }));
+    renderQuiz(r);
+    refreshMe();
+  } catch (e) {
+    $('quizBody').innerHTML = '<div class="loader" style="color:#ff8b8b">' + escapeHtml(e.message) + '</div>';
+    if (e.net) showNetError(e.detail);
+  }
+};
+
+function renderQuiz(r) {
+  $('quizTitle').textContent = '🎯 Examen de práctica';
+  const subj = $('subject').selectedOptions[0].textContent;
+  $('quizSub').textContent = r.items.length + ' preguntas · ' + subj;
+  const body = $('quizBody');
+  body.innerHTML = '';
+  QUIZ.forEach((q, i) => {
+    const d = document.createElement('div');
+    d.className = 'qitem';
+    d.innerHTML = '<h4>' + (i + 1) + '. ' + escapeHtml(q.q) + '</h4>';
+    (q.options || []).forEach((op, j) => {
+      const b = document.createElement('div');
+      b.className = 'qopt';
+      b.innerHTML = '<b>' + 'ABCD'[j] + '</b><span>' + escapeHtml(op) + '</span>';
+      b.onclick = () => {
+        if (d.dataset.done) return;
+        QUIZ[i].pick = j;
+        d.querySelectorAll('.qopt').forEach(x => x.classList.remove('sel'));
+        b.classList.add('sel');
+      };
+      d.appendChild(b);
+    });
+    const ex = document.createElement('div');
+    ex.className = 'qexp';
+    ex.innerHTML = '<b>Por qué:</b> ' + escapeHtml(q.explain || '');
+    d.appendChild(ex);
+    body.appendChild(d);
+  });
+  const btn = $('quizCheck');
+  btn.style.display = '';
+  btn.textContent = 'Corregir';
+  btn.dataset.mode = 'check';
+  btn.onclick = correctQuiz;
+}
+
+function correctQuiz() {
+  const btn = $('quizCheck');
+  if (btn.dataset.mode === 'again') {
+    $('quizModal').classList.remove('on');
+    $('examModal').classList.add('on');
+    return;
+  }
+  let ok = 0;
+  QUIZ.forEach((q, i) => {
+    const d = $('quizBody').children[i + ($('quizBody').querySelector('.score') ? 1 : 0)] || $('quizBody').children[i];
+    d.dataset.done = '1';
+    d.querySelectorAll('.qopt').forEach((el, j) => {
+      el.classList.remove('sel');
+      if (j === q.correct) el.classList.add('ok');
+      else if (j === q.pick) el.classList.add('bad');
+    });
+    const ex = d.querySelector('.qexp');
+    if (ex) ex.classList.add('on');
+    if (q.pick === q.correct) ok++;
+  });
+  const pct = Math.round((ok / QUIZ.length) * 100);
+  const color = pct >= 70 ? '#7ef0a8' : pct >= 40 ? '#e8c65a' : '#ff8b8b';
+  const msg = pct >= 70 ? '¡Muy bien! Dominas el tema.' : pct >= 40 ? 'Vas por buen camino, repasa lo fallado.' : 'Toca repasar este tema con calma.';
+  const sc = document.createElement('div');
+  sc.className = 'score';
+  sc.innerHTML = '<b style="color:' + color + '">' + ok + '/' + QUIZ.length + '</b>' +
+    '<span style="color:var(--muted);font-size:13px">' + pct + '% · ' + msg + '</span>';
+  $('quizBody').prepend(sc);
+  $('quizBody').scrollTop = 0;
+  btn.textContent = 'Otro examen';
+  btn.dataset.mode = 'again';
+}
+
+/* ================= GENERADOR DE EJERCICIOS ================= */
+$('btnEx').onclick = () => { $('exTopic2').value = ''; $('exModal').classList.add('on'); };
+$('exCancel').onclick = () => $('exModal').classList.remove('on');
+$('exListClose').onclick = () => $('exListModal').classList.remove('on');
+
+$('exGo').onclick = async () => {
+  const topic = $('exTopic2').value.trim();
+  const n = $('exN2').value;
+  $('exModal').classList.remove('on');
+  $('exListBody').innerHTML = '<div class="loader">Generando ejercicios<span class="dots"><i></i><i></i><i></i></span></div>';
+  $('exListModal').classList.add('on');
+  try {
+    const r = await api('/api/exercises', {
+      method: 'POST',
+      body: JSON.stringify({ topic, n, grade: $('grade').value, subject: $('subject').value, mode: $('mode').value })
+    });
+    renderExercises(r);
+    refreshMe();
+  } catch (e) {
+    $('exListBody').innerHTML = '<div class="loader" style="color:#ff8b8b">' + escapeHtml(e.message) + '</div>';
+    if (e.net) showNetError(e.detail);
+  }
+};
+
+function renderExercises(r) {
+  const body = $('exListBody');
+  body.innerHTML = '';
+  r.items.forEach((it, i) => {
+    const d = document.createElement('div');
+    d.className = 'exitem';
+    const steps = (it.steps || []).map(st => '<li>' + escapeHtml(st) + '</li>').join('');
+    d.innerHTML =
+      '<p class="eq">' + (i + 1) + '. ' + escapeHtml(it.q) + '</p>' +
+      '<button class="toggle-sol">Ver solución</button>' +
+      '<div class="exsol"><ol>' + steps + '</ol>' +
+      '<span class="ans">Respuesta: ' + escapeHtml(it.answer || '') + '</span></div>';
+    const btn = d.querySelector('.toggle-sol');
+    btn.onclick = () => {
+      const sol = d.querySelector('.exsol');
+      sol.classList.toggle('on');
+      btn.textContent = sol.classList.contains('on') ? 'Ocultar solución' : 'Ver solución';
+    };
+    body.appendChild(d);
+  });
+}
+
 /* ================= INIT ================= */
 (async function init() {
   countUp();
@@ -936,7 +1143,6 @@ async function openConv(id) {
       if (!e.net) { localStorage.removeItem('estudia_token'); TOKEN = ''; }
     }
   }
-  setTab('login');
 })();
 </script>
 </body>
